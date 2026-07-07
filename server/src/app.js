@@ -12,6 +12,8 @@ import { clientsRouter } from './routes/clients.js';
 import { processTemplatesRouter } from './routes/processTemplates.js';
 import { settingsRouter } from './routes/settings.js';
 import { filesRouter } from './routes/files.js';
+import { paymentsRouter } from './routes/payments.js';
+import { financeRouter } from './routes/finance.js';
 
 export function createApp() {
   const app = express();
@@ -30,6 +32,8 @@ export function createApp() {
   app.use('/api/process-templates', processTemplatesRouter);
   app.use('/api/settings', settingsRouter);
   app.use('/api/files', filesRouter);
+  app.use('/api/payments', paymentsRouter);
+  app.use('/api/finance', financeRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

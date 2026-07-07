@@ -16,6 +16,7 @@ import SettingsPage from './pages/Settings';
 import Files from './pages/Files';
 import FileNew from './pages/FileNew';
 import FileDetail from './pages/FileDetail';
+import Payments from './pages/Payments';
 import ComingSoon from './pages/ComingSoon';
 
 export default function App() {
@@ -33,7 +34,7 @@ export default function App() {
             <Route path="/files" element={<Files />} />
             <Route path="/files/new" element={<FileNew />} />
             <Route path="/files/:id" element={<FileDetail />} />
-            <Route path="/payments" element={<ComingSoon title="Payments" />} />
+            <Route path="/payments" element={<Payments />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/transporters" element={<Transporters />} />
             <Route path="/payment-types" element={<PaymentTypes />} />
