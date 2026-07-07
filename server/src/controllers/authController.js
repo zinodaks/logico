@@ -62,7 +62,8 @@ export async function login(req, res) {
 }
 
 export async function logout(req, res) {
-  res.clearCookie(env.cookieName, cookieOptions);
+  const { maxAge: _maxAge, ...clearOptions } = cookieOptions;
+  res.clearCookie(env.cookieName, clearOptions);
   res.status(204).end();
 }
 
