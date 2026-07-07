@@ -2,14 +2,19 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { listFiles } from '../api/files';
+import { agentsApi } from '../api/agents';
 
 export default function Files() {
   const [status, setStatus] = useState('');
   const [processType, setProcessType] = useState('');
+  const [agent, setAgent] = useState('');
+
+  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: agentsApi.list });
 
   const filters: Record<string, string> = {};
   if (status) filters.status = status;
   if (processType) filters.processType = processType;
+  if (agent) filters.agent = agent;
 
   const { data: files, isLoading } = useQuery({
     queryKey: ['files', filters],
@@ -40,15 +45,22 @@ export default function Files() {
           <option value="IM4">IM4</option>
           <option value="TR8">TR8</option>
         </select>
+        <select value={agent} onChange={(e) => setAgent(e.target.value)} className="px-3 py-2 border border-gray-300 rounded">
+          <option value="">All agents</option>
+          {agents?.map((a) => (
+            <option key={a._id} value={a._id}>
+              {a.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
-              <th className="px-4 py-2">Reference</th>
-              <th className="px-4 py-2">Client</th>
               <th className="px-4 py-2">BL Number</th>
+              <th className="px-4 py-2">Client</th>
               <th className="px-4 py-2">Process</th>
               <th className="px-4 py-2">Agent</th>
               <th className="px-4 py-2">Transporter</th>
@@ -58,7 +70,7 @@ export default function Files() {
           <tbody>
             {isLoading && (
               <tr>
-                <td className="px-4 py-3 text-gray-400" colSpan={7}>
+                <td className="px-4 py-3 text-gray-400" colSpan={6}>
                   Loading…
                 </td>
               </tr>
@@ -67,11 +79,10 @@ export default function Files() {
               <tr key={f._id} className="border-t border-gray-100 hover:bg-gray-50">
                 <td className="px-4 py-2">
                   <Link to={`/files/${f._id}`} className="text-blue-600 underline">
-                    {f.reference}
+                    {f.blNumber}
                   </Link>
                 </td>
                 <td className="px-4 py-2">{f.client?.name}</td>
-                <td className="px-4 py-2">{f.blNumber}</td>
                 <td className="px-4 py-2">{f.processType}</td>
                 <td className="px-4 py-2">{f.agent?.name}</td>
                 <td className="px-4 py-2">{f.transporter?.name}</td>

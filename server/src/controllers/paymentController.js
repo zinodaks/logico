@@ -2,7 +2,7 @@ import { Payment, PAYMENT_DIRECTIONS } from '../models/Payment.js';
 import { ApiError } from '../middleware/errorHandler.js';
 
 const POPULATE = [
-  { path: 'file', select: 'reference blNumber' },
+  { path: 'file', select: 'blNumber' },
   { path: 'agent', select: 'name' },
   { path: 'transporter', select: 'name' },
   { path: 'paymentType', select: 'name' },

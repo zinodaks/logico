@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const containerSchema = new mongoose.Schema(
   {
+    number: { type: String, required: true, trim: true },
     type: { type: String, enum: ['20', '40'], required: true },
-    quantity: { type: Number, required: true, min: 1 },
   },
   { _id: false },
 );
@@ -34,9 +34,8 @@ const cautionSchema = new mongoose.Schema(
 
 const shipmentFileSchema = new mongoose.Schema(
   {
-    reference: { type: String, required: true, unique: true },
     client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
-    blNumber: { type: String, required: true, trim: true },
+    blNumber: { type: String, required: true, trim: true, unique: true },
     containers: { type: [containerSchema], default: [] },
     shippingLine: { type: String, required: true, trim: true },
     natureOfGoods: { type: String, required: true, trim: true },

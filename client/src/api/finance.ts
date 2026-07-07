@@ -15,6 +15,7 @@ export interface FileProfitability {
   balanceDue: number;
   transportCost: { amount: number; currency: 'USD' | 'CDF' };
   outstandingTransportCost: number;
+  cashBalance: CurrencyTotals;
 }
 
 export interface ClientProfitability {
@@ -39,7 +40,7 @@ export async function getClientProfitability(clientId: string): Promise<ClientPr
 }
 
 export interface ActualCautionReportItem {
-  file: { _id: string; reference: string; client: { _id: string; name: string } };
+  file: { _id: string; blNumber: string; client: { _id: string; name: string } };
   cautionAmount: number;
   currency: 'USD' | 'CDF';
   paid: boolean;

@@ -58,6 +58,33 @@ export async function computeCashBalance() {
 }
 
 /**
+ * A single file's cash position: every recorded receipt (client_payment,
+ * caution_refund) minus every recorded outflow (agent/transporter/generic
+ * payments, caution_deposit) for that file — mirrors computeCashBalance's
+ * sign convention but scoped to one file. This is a real cash-in-hand
+ * figure, distinct from profitability (which compares expenses against the
+ * selling price rather than against what's actually been collected).
+ */
+export async function computeFileCashBalance(fileId) {
+  const objectId = new mongoose.Types.ObjectId(fileId);
+  const rows = await Payment.aggregate([
+    { $match: { file: objectId } },
+    { $group: { _id: { currency: '$currency', direction: '$direction' }, total: { $sum: '$amount' } } },
+  ]);
+
+  const balance = { USD: 0, CDF: 0 };
+  for (const row of rows) {
+    const sign = INFLOW_DIRECTIONS.includes(row._id.direction)
+      ? 1
+      : OUTFLOW_DIRECTIONS.includes(row._id.direction)
+        ? -1
+        : 0;
+    balance[row._id.currency] += sign * row.total;
+  }
+  return balance;
+}
+
+/**
  * Cash-basis profitability for a single file: sellingPrice minus recorded
  * expenses (agent/transporter/generic payments) in the selling price's
  * currency. Caution deposit/refund payments are excluded — they're a
@@ -93,6 +120,7 @@ export async function computeFileProfitability(fileId) {
   const profit = file.sellingPrice.amount - (expenses[currency] ?? 0);
   const balanceDue = file.sellingPrice.amount - (collected[currency] ?? 0);
   const outstandingTransportCost = file.transportCost.amount - (transportPaid[file.transportCost.currency] ?? 0);
+  const cashBalance = await computeFileCashBalance(fileId);
 
   return {
     currency,
@@ -104,6 +132,7 @@ export async function computeFileProfitability(fileId) {
     balanceDue,
     transportCost: file.transportCost,
     outstandingTransportCost,
+    cashBalance,
   };
 }
 

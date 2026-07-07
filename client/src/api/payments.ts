@@ -11,7 +11,7 @@ export type PaymentDirection =
 
 export interface Payment {
   _id: string;
-  file?: { _id: string; reference: string; blNumber: string };
+  file?: { _id: string; blNumber: string };
   direction: PaymentDirection;
   amount: number;
   currency: 'USD' | 'CDF';

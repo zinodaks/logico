@@ -32,7 +32,7 @@ function Section({
   items,
 }: {
   title: string;
-  items: { file: { _id: string; reference: string; client: { name: string } }; cautionAmount: number; currency: string }[];
+  items: { file: { _id: string; blNumber: string; client: { name: string } }; cautionAmount: number; currency: string }[];
 }) {
   if (items.length === 0) return null;
   return (
@@ -42,7 +42,7 @@ function Section({
         <table className="w-full text-sm">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
-              <th className="px-4 py-2">Reference</th>
+              <th className="px-4 py-2">BL Number</th>
               <th className="px-4 py-2">Client</th>
               <th className="px-4 py-2">Caution Amount</th>
             </tr>
@@ -52,7 +52,7 @@ function Section({
               <tr key={i.file._id} className="border-t border-gray-100">
                 <td className="px-4 py-2">
                   <Link to={`/files/${i.file._id}`} className="text-blue-600 underline">
-                    {i.file.reference}
+                    {i.file.blNumber}
                   </Link>
                 </td>
                 <td className="px-4 py-2">{i.file.client.name}</td>

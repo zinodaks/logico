@@ -6,8 +6,8 @@ export interface Money {
 }
 
 export interface Container {
+  number: string;
   type: '20' | '40';
-  quantity: number;
 }
 
 export interface FileStep {
@@ -19,7 +19,6 @@ export interface FileStep {
 
 export interface ShipmentFile {
   _id: string;
-  reference: string;
   client: { _id: string; name: string };
   blNumber: string;
   containers: Container[];
@@ -73,4 +72,13 @@ export async function toggleFileStep(id: string, stepIndex: number): Promise<Shi
 export async function updateFileStatus(id: string, status: 'open' | 'closed'): Promise<ShipmentFile> {
   const { data } = await api.patch<{ item: ShipmentFile }>(`/files/${id}/status`, { status });
   return data.item;
+}
+
+export async function updateFileTransporter(id: string, transporter: string): Promise<ShipmentFile> {
+  const { data } = await api.patch<{ item: ShipmentFile }>(`/files/${id}/transporter`, { transporter });
+  return data.item;
+}
+
+export function fileStatementUrl(id: string, format: 'pdf' | 'xlsx'): string {
+  return `/api/files/${id}/statement?format=${format}`;
 }

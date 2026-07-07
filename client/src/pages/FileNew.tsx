@@ -15,7 +15,7 @@ export default function FileNew() {
   const [client, setClient] = useState('');
   const [processType, setProcessType] = useState<'IM4' | 'TR8'>('IM4');
   const [blNumber, setBlNumber] = useState('');
-  const [containers, setContainers] = useState<Container[]>([{ type: '20', quantity: 1 }]);
+  const [containers, setContainers] = useState<Container[]>([{ number: '', type: '20' }]);
   const [shippingLine, setShippingLine] = useState('');
   const [natureOfGoods, setNatureOfGoods] = useState('');
   const [sellingPriceAmount, setSellingPriceAmount] = useState('');
@@ -36,13 +36,11 @@ export default function FileNew() {
   });
 
   function updateContainer(index: number, field: keyof Container, value: string) {
-    setContainers((prev) =>
-      prev.map((c, i) => (i === index ? { ...c, [field]: field === 'quantity' ? Number(value) : value } : c)),
-    );
+    setContainers((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
   }
 
   function addContainer() {
-    setContainers((prev) => [...prev, { type: '20', quantity: 1 }]);
+    setContainers((prev) => [...prev, { number: '', type: '20' }]);
   }
 
   function removeContainer(index: number) {
@@ -53,6 +51,10 @@ export default function FileNew() {
     setError(null);
     if (!client || !agent || !transporter || !blNumber || !shippingLine || !natureOfGoods || !sellingPriceAmount) {
       setError('Please fill in all required fields');
+      return;
+    }
+    if (containers.some((c) => !c.number.trim())) {
+      setError('Every container needs a container number');
       return;
     }
     createMutation.mutate({
@@ -120,17 +122,16 @@ export default function FileNew() {
           <label className="block text-sm text-gray-600 mb-2">Containers</label>
           {containers.map((c, i) => (
             <div key={i} className="flex gap-2 items-center mb-2">
+              <input
+                placeholder="Container number"
+                value={c.number}
+                onChange={(e) => updateContainer(i, 'number', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded flex-1"
+              />
               <select value={c.type} onChange={(e) => updateContainer(i, 'type', e.target.value)} className="px-3 py-2 border border-gray-300 rounded">
                 <option value="20">20'</option>
                 <option value="40">40'</option>
               </select>
-              <input
-                type="number"
-                min={1}
-                value={c.quantity}
-                onChange={(e) => updateContainer(i, 'quantity', e.target.value)}
-                className="w-24 px-3 py-2 border border-gray-300 rounded"
-              />
               {containers.length > 1 && (
                 <button type="button" onClick={() => removeContainer(i)} className="text-red-600 underline">
                   Remove
@@ -139,7 +140,7 @@ export default function FileNew() {
             </div>
           ))}
           <button type="button" onClick={addContainer} className="text-blue-600 underline text-sm">
-            + Add container line
+            + Add container
           </button>
         </div>
 

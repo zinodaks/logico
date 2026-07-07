@@ -247,7 +247,6 @@ function ClientFilesTab({ clientId }: { clientId: string }) {
         <table className="w-full text-sm">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
-              <th className="px-4 py-2">Reference</th>
               <th className="px-4 py-2">BL Number</th>
               <th className="px-4 py-2">Process</th>
               <th className="px-4 py-2">Status</th>
@@ -256,7 +255,7 @@ function ClientFilesTab({ clientId }: { clientId: string }) {
           <tbody>
             {files?.length === 0 && (
               <tr>
-                <td className="px-4 py-3 text-gray-400" colSpan={4}>
+                <td className="px-4 py-3 text-gray-400" colSpan={3}>
                   No files yet.
                 </td>
               </tr>
@@ -265,10 +264,9 @@ function ClientFilesTab({ clientId }: { clientId: string }) {
               <tr key={f._id} className="border-t border-gray-100">
                 <td className="px-4 py-2">
                   <Link to={`/files/${f._id}`} className="text-blue-600 underline">
-                    {f.reference}
+                    {f.blNumber}
                   </Link>
                 </td>
-                <td className="px-4 py-2">{f.blNumber}</td>
                 <td className="px-4 py-2">{f.processType}</td>
                 <td className="px-4 py-2 capitalize">{f.status}</td>
               </tr>

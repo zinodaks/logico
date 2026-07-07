@@ -21,7 +21,6 @@ export async function buildClientStatementData(clientId) {
   for (const file of files) {
     const profitability = await computeFileProfitability(file._id);
     rows.push({
-      reference: file.reference,
       blNumber: file.blNumber,
       status: file.status,
       currency: profitability.currency,
@@ -35,6 +34,42 @@ export async function buildClientStatementData(clientId) {
   }
 
   return { client, rows, totals };
+}
+
+/**
+ * A single file's client-facing statement: the selling price as a debit
+ * (the charge), each client payment as a credit (a receipt), and the
+ * running balance due. Expenses are deliberately excluded — this is a
+ * statement for the client, not an internal profitability breakdown.
+ */
+export async function buildFileStatementData(fileId) {
+  const file = await ShipmentFile.findById(fileId).populate('client', 'name address');
+  if (!file) return null;
+
+  const payments = await Payment.find({ file: fileId, direction: 'client_payment' })
+    .populate('paymentType', 'name')
+    .sort({ date: 1 });
+
+  const rows = [
+    {
+      date: file.createdAt,
+      description: 'Selling price',
+      debit: file.sellingPrice.amount,
+      credit: 0,
+    },
+    ...payments.map((p) => ({
+      date: p.date,
+      description: p.paymentType?.name ?? 'Payment',
+      debit: 0,
+      credit: p.amount,
+    })),
+  ];
+
+  const totalDebit = file.sellingPrice.amount;
+  const totalCredit = payments.reduce((sum, p) => sum + p.amount, 0);
+  const balanceDue = totalDebit - totalCredit;
+
+  return { file, currency: file.sellingPrice.currency, rows, totalDebit, totalCredit, balanceDue };
 }
 
 export async function buildTransporterStatementData(transporterId) {
@@ -61,7 +96,6 @@ export async function buildTransporterStatementData(transporterId) {
     const paid = paidByFile.get(`${file._id}-${file.transportCost.currency}`) ?? 0;
     const balanceOwed = file.transportCost.amount - paid;
     rows.push({
-      reference: file.reference,
       client: file.client.name,
       blNumber: file.blNumber,
       currency: file.transportCost.currency,

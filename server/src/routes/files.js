@@ -4,9 +4,11 @@ import {
   getFile,
   createFile,
   updateFile,
+  updateTransporter,
   toggleStep,
   updateStatus,
   deleteFile,
+  getFileStatement,
 } from '../controllers/fileController.js';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -19,5 +21,7 @@ filesRouter.post('/', asyncHandler(createFile));
 filesRouter.get('/:id', asyncHandler(getFile));
 filesRouter.patch('/:id', asyncHandler(updateFile));
 filesRouter.delete('/:id', asyncHandler(deleteFile));
+filesRouter.patch('/:id/transporter', asyncHandler(updateTransporter));
 filesRouter.patch('/:id/steps/:stepIndex', asyncHandler(toggleStep));
 filesRouter.patch('/:id/status', asyncHandler(updateStatus));
+filesRouter.get('/:id/statement', asyncHandler(getFileStatement));

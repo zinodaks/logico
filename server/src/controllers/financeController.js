@@ -32,7 +32,7 @@ export async function getActualCautionsReport(req, res) {
   const refundedFileIds = new Set(refunds.map((p) => p.file.toString()));
 
   const items = files.map((file) => ({
-    file: { _id: file._id, reference: file.reference, client: file.client },
+    file: { _id: file._id, blNumber: file.blNumber, client: file.client },
     cautionAmount: file.caution.amount,
     currency: file.caution.currency,
     paid: depositedFileIds.has(file._id.toString()),
