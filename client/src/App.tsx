@@ -11,6 +11,11 @@ import Transporters from './pages/Transporters';
 import PaymentTypes from './pages/PaymentTypes';
 import Clients from './pages/Clients';
 import ClientDetail from './pages/ClientDetail';
+import ProcessTemplates from './pages/ProcessTemplates';
+import SettingsPage from './pages/Settings';
+import Files from './pages/Files';
+import FileNew from './pages/FileNew';
+import FileDetail from './pages/FileDetail';
 import ComingSoon from './pages/ComingSoon';
 
 export default function App() {
@@ -25,15 +30,17 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/:id" element={<ClientDetail />} />
-            <Route path="/files" element={<ComingSoon title="Files" />} />
+            <Route path="/files" element={<Files />} />
+            <Route path="/files/new" element={<FileNew />} />
+            <Route path="/files/:id" element={<FileDetail />} />
             <Route path="/payments" element={<ComingSoon title="Payments" />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/transporters" element={<Transporters />} />
             <Route path="/payment-types" element={<PaymentTypes />} />
-            <Route path="/process-templates" element={<ComingSoon title="Process Templates" />} />
+            <Route path="/process-templates" element={<ProcessTemplates />} />
             <Route path="/profit-transfers" element={<ComingSoon title="Profit Transfers" />} />
             <Route path="/reports/cautions-actual" element={<ComingSoon title="Caution Report" />} />
-            <Route path="/settings" element={<ComingSoon title="Settings" />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/team" element={<Team />} />
           </Route>
         </Route>

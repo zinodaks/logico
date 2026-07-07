@@ -9,6 +9,9 @@ import { agentsRouter } from './routes/agents.js';
 import { transportersRouter } from './routes/transporters.js';
 import { paymentTypesRouter } from './routes/paymentTypes.js';
 import { clientsRouter } from './routes/clients.js';
+import { processTemplatesRouter } from './routes/processTemplates.js';
+import { settingsRouter } from './routes/settings.js';
+import { filesRouter } from './routes/files.js';
 
 export function createApp() {
   const app = express();
@@ -24,6 +27,9 @@ export function createApp() {
   app.use('/api/transporters', transportersRouter);
   app.use('/api/payment-types', paymentTypesRouter);
   app.use('/api/clients', clientsRouter);
+  app.use('/api/process-templates', processTemplatesRouter);
+  app.use('/api/settings', settingsRouter);
+  app.use('/api/files', filesRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
