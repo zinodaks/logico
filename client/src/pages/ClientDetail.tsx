@@ -1,15 +1,19 @@
 import { useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   clientDocumentDownloadUrl,
+  clientDocumentsZipUrl,
+  clientStatementUrl,
   deleteClientDocument,
   getClient,
   updateClient,
   uploadClientDocument,
 } from '../api/clients';
+import { listFiles } from '../api/files';
+import { getClientProfitability } from '../api/finance';
 
-type Tab = 'info' | 'documents';
+type Tab = 'info' | 'documents' | 'files' | 'statement';
 
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
@@ -64,7 +68,7 @@ export default function ClientDetail() {
       <p className="text-gray-500 mb-6">{client.active ? 'Active' : 'Deactivated'}</p>
 
       <div className="flex gap-4 border-b border-gray-200 mb-6">
-        {(['info', 'documents'] as Tab[]).map((t) => (
+        {(['info', 'documents', 'files', 'statement'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -136,8 +140,13 @@ export default function ClientDetail() {
 
       {tab === 'documents' && (
         <div>
-          <div className="mb-4">
+          <div className="mb-4 flex items-center gap-4">
             <input ref={fileInputRef} type="file" onChange={handleFileChange} />
+            {client.documents.length > 0 && (
+              <a href={clientDocumentsZipUrl(client._id)} className="text-blue-600 underline text-sm">
+                Download all as .zip
+              </a>
+            )}
           </div>
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="w-full text-sm">
@@ -183,6 +192,90 @@ export default function ClientDetail() {
           </div>
         </div>
       )}
+
+      {tab === 'files' && <ClientFilesTab clientId={client._id} />}
+
+      {tab === 'statement' && (
+        <div className="bg-white rounded-lg shadow p-6 max-w-md">
+          <p className="text-gray-500 mb-4">Export a statement of this client's files, charges, and balances due.</p>
+          <div className="flex gap-3">
+            <a
+              href={clientStatementUrl(client._id, 'pdf')}
+              className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
+            >
+              Download PDF
+            </a>
+            <a
+              href={clientStatementUrl(client._id, 'xlsx')}
+              className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+            >
+              Download Excel
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClientFilesTab({ clientId }: { clientId: string }) {
+  const { data: files } = useQuery({ queryKey: ['files', { client: clientId }], queryFn: () => listFiles({ client: clientId }) });
+  const { data: profitability } = useQuery({
+    queryKey: ['client-profitability', clientId],
+    queryFn: () => getClientProfitability(clientId),
+  });
+
+  return (
+    <div>
+      {profitability && (
+        <div className="bg-white rounded-lg shadow p-4 mb-4 flex gap-8 text-sm">
+          <div>
+            <span className="text-gray-500">Realized profit (USD): </span>
+            <span className="font-medium">{profitability.realized.USD.toFixed(2)}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Projected profit (USD): </span>
+            <span className="font-medium">{profitability.projected.USD.toFixed(2)}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Files: </span>
+            <span className="font-medium">{profitability.fileCount}</span>
+          </div>
+        </div>
+      )}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100 text-left text-gray-600">
+            <tr>
+              <th className="px-4 py-2">Reference</th>
+              <th className="px-4 py-2">BL Number</th>
+              <th className="px-4 py-2">Process</th>
+              <th className="px-4 py-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {files?.length === 0 && (
+              <tr>
+                <td className="px-4 py-3 text-gray-400" colSpan={4}>
+                  No files yet.
+                </td>
+              </tr>
+            )}
+            {files?.map((f) => (
+              <tr key={f._id} className="border-t border-gray-100">
+                <td className="px-4 py-2">
+                  <Link to={`/files/${f._id}`} className="text-blue-600 underline">
+                    {f.reference}
+                  </Link>
+                </td>
+                <td className="px-4 py-2">{f.blNumber}</td>
+                <td className="px-4 py-2">{f.processType}</td>
+                <td className="px-4 py-2 capitalize">{f.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

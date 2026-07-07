@@ -59,3 +59,11 @@ export async function deleteClientDocument(id: string, docId: string): Promise<C
 export function clientDocumentDownloadUrl(id: string, docId: string): string {
   return `/api/clients/${id}/documents/${docId}/download`;
 }
+
+export function clientDocumentsZipUrl(id: string): string {
+  return `/api/clients/${id}/documents/zip`;
+}
+
+export function clientStatementUrl(id: string, format: 'pdf' | 'xlsx'): string {
+  return `/api/clients/${id}/statement?format=${format}`;
+}

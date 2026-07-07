@@ -9,6 +9,8 @@ import {
   uploadDocument,
   deleteDocument,
   downloadDocument,
+  downloadAllDocuments,
+  getClientStatement,
 } from '../controllers/clientController.js';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -25,5 +27,7 @@ clientsRouter.patch('/:id', asyncHandler(updateClient));
 clientsRouter.delete('/:id', asyncHandler(deleteClient));
 
 clientsRouter.post('/:id/documents', upload.single('file'), asyncHandler(uploadDocument));
+clientsRouter.get('/:id/documents/zip', asyncHandler(downloadAllDocuments));
 clientsRouter.delete('/:id/documents/:docId', asyncHandler(deleteDocument));
 clientsRouter.get('/:id/documents/:docId/download', asyncHandler(downloadDocument));
+clientsRouter.get('/:id/statement', asyncHandler(getClientStatement));

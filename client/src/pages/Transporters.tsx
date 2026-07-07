@@ -99,7 +99,13 @@ export default function Transporters() {
                   {t.fixedTransportCost.toFixed(2)} {t.currency}
                 </td>
                 <td className="px-4 py-2">{t.active ? 'Active' : 'Deactivated'}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-right space-x-3">
+                  <a href={`/api/transporters/${t._id}/statement`} className="text-blue-600 underline">
+                    Statement (PDF)
+                  </a>
+                  <a href={`/api/transporters/${t._id}/statement?format=xlsx`} className="text-blue-600 underline">
+                    Statement (Excel)
+                  </a>
                   <button
                     className="text-blue-600 underline"
                     onClick={() => toggleActiveMutation.mutate({ id: t._id, active: !t.active })}

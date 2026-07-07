@@ -1,6 +1,9 @@
 import { randomUUID } from 'crypto';
+import archiver from 'archiver';
 import { Client } from '../models/Client.js';
-import { uploadObject, deleteObject, getPresignedDownloadUrl } from '../services/s3Service.js';
+import { uploadObject, deleteObject, getPresignedDownloadUrl, getObjectStream } from '../services/s3Service.js';
+import { buildClientStatementData } from '../services/statementService.js';
+import { streamClientStatementPdf, streamClientStatementXlsx } from '../services/exportService.js';
 import { ApiError } from '../middleware/errorHandler.js';
 
 const CLIENT_FIELDS = ['name', 'address', 'rccm', 'identificationNationale', 'nif'];
@@ -89,4 +92,34 @@ export async function downloadDocument(req, res) {
 
   const url = await getPresignedDownloadUrl(doc.key, doc.filename);
   res.redirect(url);
+}
+
+export async function downloadAllDocuments(req, res) {
+  const client = await Client.findById(req.params.id);
+  if (!client) throw new ApiError(404, 'Client not found');
+  if (client.documents.length === 0) throw new ApiError(404, 'This client has no documents');
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${client.name}-documents.zip"`);
+
+  const archive = archiver('zip');
+  archive.pipe(res);
+
+  for (const doc of client.documents) {
+    const stream = await getObjectStream(doc.key);
+    archive.append(stream, { name: doc.filename });
+  }
+
+  await archive.finalize();
+}
+
+export async function getClientStatement(req, res) {
+  const data = await buildClientStatementData(req.params.id);
+  if (!data) throw new ApiError(404, 'Client not found');
+
+  if (req.query.format === 'xlsx') {
+    await streamClientStatementXlsx(res, data);
+  } else {
+    streamClientStatementPdf(res, data);
+  }
 }
