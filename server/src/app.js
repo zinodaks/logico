@@ -3,6 +3,8 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
+import { authRouter } from './routes/auth.js';
+import { usersRouter } from './routes/users.js';
 
 export function createApp() {
   const app = express();
@@ -12,6 +14,8 @@ export function createApp() {
   app.use(cookieParser());
 
   app.get('/api/health', (req, res) => res.json({ ok: true }));
+  app.use('/api/auth', authRouter);
+  app.use('/api/users', usersRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

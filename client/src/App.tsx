@@ -1,35 +1,39 @@
-import { useEffect, useState } from 'react';
-import { api } from './api/client';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AppLayout } from './components/AppLayout';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import Team from './pages/Team';
+import ComingSoon from './pages/ComingSoon';
 
 export default function App() {
-  const [status, setStatus] = useState<'checking' | 'ok' | 'error'>('checking');
-
-  useEffect(() => {
-    api
-      .get('/health')
-      .then(() => setStatus('ok'))
-      .catch(() => setStatus('error'));
-  }, []);
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-gray-800">Cash Flow</h1>
-        <p className="mt-2 text-gray-500">
-          API status:{' '}
-          <span
-            className={
-              status === 'ok'
-                ? 'text-green-600'
-                : status === 'error'
-                  ? 'text-red-600'
-                  : 'text-gray-400'
-            }
-          >
-            {status}
-          </span>
-        </p>
-      </div>
-    </div>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/clients" element={<ComingSoon title="Clients" />} />
+            <Route path="/files" element={<ComingSoon title="Files" />} />
+            <Route path="/payments" element={<ComingSoon title="Payments" />} />
+            <Route path="/agents" element={<ComingSoon title="Agents" />} />
+            <Route path="/transporters" element={<ComingSoon title="Transporters" />} />
+            <Route path="/payment-types" element={<ComingSoon title="Payment Types" />} />
+            <Route path="/process-templates" element={<ComingSoon title="Process Templates" />} />
+            <Route path="/profit-transfers" element={<ComingSoon title="Profit Transfers" />} />
+            <Route path="/reports/cautions-actual" element={<ComingSoon title="Caution Report" />} />
+            <Route path="/settings" element={<ComingSoon title="Settings" />} />
+            <Route path="/team" element={<Team />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }
