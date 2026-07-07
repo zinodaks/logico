@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Payment } from '../models/Payment.js';
 import { ShipmentFile } from '../models/ShipmentFile.js';
+import { ProfitTransfer } from '../models/ProfitTransfer.js';
 
 const INFLOW_DIRECTIONS = ['client_payment', 'caution_refund'];
 const OUTFLOW_DIRECTIONS = [
@@ -21,9 +22,10 @@ function toCurrencyTotals(rows) {
 }
 
 /**
- * Overall cash balance: sums every recorded Payment by direction/currency.
- * client_payment and caution_refund are inflows; everything else is an
- * outflow. Profit transfers are folded in separately once that model exists.
+ * Overall cash balance: sums every recorded Payment by direction/currency,
+ * then subtracts profit transfers to the owner's personal account —
+ * client_payment and caution_refund are inflows; every other Payment
+ * direction and every ProfitTransfer are outflows.
  */
 export async function computeCashBalance() {
   const rows = await Payment.aggregate([
@@ -44,6 +46,14 @@ export async function computeCashBalance() {
         : 0;
     balance[row._id.currency] += sign * row.total;
   }
+
+  const transferRows = await ProfitTransfer.aggregate([
+    { $group: { _id: '$currency', total: { $sum: '$amount' } } },
+  ]);
+  for (const row of transferRows) {
+    balance[row._id] -= row.total;
+  }
+
   return balance;
 }
 

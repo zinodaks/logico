@@ -14,6 +14,7 @@ import { settingsRouter } from './routes/settings.js';
 import { filesRouter } from './routes/files.js';
 import { paymentsRouter } from './routes/payments.js';
 import { financeRouter } from './routes/finance.js';
+import { profitTransfersRouter } from './routes/profitTransfers.js';
 
 export function createApp() {
   const app = express();
@@ -34,6 +35,7 @@ export function createApp() {
   app.use('/api/files', filesRouter);
   app.use('/api/payments', paymentsRouter);
   app.use('/api/finance', financeRouter);
+  app.use('/api/profit-transfers', profitTransfersRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

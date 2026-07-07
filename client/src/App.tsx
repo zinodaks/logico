@@ -18,7 +18,7 @@ import FileNew from './pages/FileNew';
 import FileDetail from './pages/FileDetail';
 import Payments from './pages/Payments';
 import CautionsReport from './pages/CautionsReport';
-import ComingSoon from './pages/ComingSoon';
+import ProfitTransfers from './pages/ProfitTransfers';
 
 export default function App() {
   return (
@@ -40,7 +40,7 @@ export default function App() {
             <Route path="/transporters" element={<Transporters />} />
             <Route path="/payment-types" element={<PaymentTypes />} />
             <Route path="/process-templates" element={<ProcessTemplates />} />
-            <Route path="/profit-transfers" element={<ComingSoon title="Profit Transfers" />} />
+            <Route path="/profit-transfers" element={<ProfitTransfers />} />
             <Route path="/reports/cautions-actual" element={<CautionsReport />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/team" element={<Team />} />

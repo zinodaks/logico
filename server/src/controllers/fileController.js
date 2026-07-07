@@ -59,6 +59,7 @@ export async function createFile(req, res) {
   if (!shippingLine || !natureOfGoods || !sellingPrice?.amount || !sellingPrice?.currency) {
     throw new ApiError(400, 'shippingLine, natureOfGoods, and sellingPrice are required');
   }
+  if (sellingPrice.amount <= 0) throw new ApiError(400, 'sellingPrice must be greater than 0');
   if (!agent || !transporter) throw new ApiError(400, 'agent and transporter are required');
   if (!['IM4', 'TR8'].includes(processType)) throw new ApiError(400, 'processType must be IM4 or TR8');
   if (!['actual', 'interest'].includes(cautionType)) throw new ApiError(400, 'cautionType must be actual or interest');
