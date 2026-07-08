@@ -185,10 +185,18 @@ export default function FileNew() {
               <option value="">Select a transporter…</option>
               {transporters?.map((t) => (
                 <option key={t._id} value={t._id}>
-                  {t.name} ({t.fixedTransportCost} {t.currency})
+                  {t.name} ({t.fixedTransportCost} {t.currency}/container)
                 </option>
               ))}
             </select>
+            {transporter && (
+              <p className="text-xs text-gray-500 mt-1">
+                Transport cost: {transporters?.find((t) => t._id === transporter)?.fixedTransportCost} ×{' '}
+                {containers.length} container{containers.length === 1 ? '' : 's'} ={' '}
+                {(transporters?.find((t) => t._id === transporter)?.fixedTransportCost ?? 0) * containers.length}{' '}
+                {transporters?.find((t) => t._id === transporter)?.currency}
+              </p>
+            )}
           </div>
         </div>
 

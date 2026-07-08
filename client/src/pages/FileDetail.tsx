@@ -161,7 +161,8 @@ export default function FileDetail() {
                       <option value="">Select…</option>
                       {transporters?.map((t) => (
                         <option key={t._id} value={t._id}>
-                          {t.name} ({t.fixedTransportCost} {t.currency})
+                          {t.name} ({t.fixedTransportCost} {t.currency}/container × {file.containers.length} ={' '}
+                          {t.fixedTransportCost * file.containers.length} {t.currency})
                         </option>
                       ))}
                     </select>

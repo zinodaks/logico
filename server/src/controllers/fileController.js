@@ -14,6 +14,10 @@ function computeCautionAmount(containers, settings) {
   }, 0);
 }
 
+function computeTransportCost(transporterDoc, containerCount) {
+  return { amount: transporterDoc.fixedTransportCost * containerCount, currency: transporterDoc.currency };
+}
+
 export async function listFiles(req, res) {
   const filter = {};
   if (req.query.client) filter.client = req.query.client;
@@ -90,7 +94,7 @@ export async function createFile(req, res) {
     sellingPrice,
     agent,
     transporter,
-    transportCost: { amount: transporterDoc.fixedTransportCost, currency: transporterDoc.currency },
+    transportCost: computeTransportCost(transporterDoc, containers.length),
     processType,
     steps,
     caution: { type: cautionType, amount: cautionAmount, currency: settings.cautionCurrency },
@@ -106,8 +110,24 @@ export async function updateFile(req, res) {
   for (const field of fields) {
     if (req.body[field] !== undefined) payload[field] = req.body[field];
   }
-  const file = await ShipmentFile.findByIdAndUpdate(req.params.id, payload, { new: true });
+
+  const file = await ShipmentFile.findById(req.params.id);
   if (!file) throw new ApiError(404, 'File not found');
+
+  if (payload.containers) {
+    if (payload.containers.some((c) => !c.number || !['20', '40'].includes(c.type))) {
+      throw new ApiError(400, 'Each container needs a number and a type (20 or 40)');
+    }
+    const [transporterDoc, settings] = await Promise.all([Transporter.findById(file.transporter), getSettings()]);
+    payload.transportCost = computeTransportCost(transporterDoc, payload.containers.length);
+    payload.caution = {
+      ...file.caution.toObject(),
+      amount: computeCautionAmount(payload.containers, settings),
+    };
+  }
+
+  Object.assign(file, payload);
+  await file.save();
   res.json({ item: file });
 }
 
@@ -123,7 +143,7 @@ export async function updateTransporter(req, res) {
   if (!transporterDoc) throw new ApiError(404, 'Transporter not found');
 
   file.transporter = transporterDoc._id;
-  file.transportCost = { amount: transporterDoc.fixedTransportCost, currency: transporterDoc.currency };
+  file.transportCost = computeTransportCost(transporterDoc, file.containers.length);
   await file.save();
 
   res.json({ item: file });

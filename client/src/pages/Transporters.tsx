@@ -45,7 +45,7 @@ export default function Transporters() {
           />
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-1">Fixed cost</label>
+          <label className="block text-sm text-gray-600 mb-1">Fixed cost (per container)</label>
           <input
             type="number"
             step="0.01"
@@ -79,7 +79,7 @@ export default function Transporters() {
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Fixed cost</th>
+              <th className="px-4 py-2">Fixed cost (per container)</th>
               <th className="px-4 py-2">Status</th>
               <th className="px-4 py-2"></th>
             </tr>
