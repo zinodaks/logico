@@ -108,6 +108,14 @@ export default function FileDetail() {
               {profitability.balanceDue.toFixed(2)} {profitability.currency}
             </p>
           </div>
+          {profitability.caution.type === 'actual' && profitability.caution.outstandingToCollect > 0 && (
+            <div className="bg-white rounded-lg shadow px-4 py-3 border-2 border-yellow-300">
+              <p className="text-xs text-gray-500">Caution to collect from shipping line</p>
+              <p className="text-lg font-semibold text-yellow-700">
+                {profitability.caution.outstandingToCollect.toFixed(2)} {profitability.caution.currency}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -301,52 +309,111 @@ export default function FileDetail() {
       )}
 
       {tab === 'profitability' && profitability && (
-        <div className="bg-white rounded-lg shadow p-6 max-w-xl">
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className={`text-xs px-2 py-0.5 rounded ${profitability.realized ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
-            >
-              {profitability.realized ? 'Realized' : 'Projected'}
-            </span>
+        <div className="space-y-6 max-w-xl">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span
+                className={`text-xs px-2 py-0.5 rounded ${profitability.realized ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
+              >
+                {profitability.realized ? 'Realized' : 'Projected'}
+              </span>
+            </div>
+            <dl className="text-sm divide-y divide-gray-100">
+              <div className="flex justify-between py-2">
+                <dt className="text-gray-500">Selling price</dt>
+                <dd>
+                  {profitability.sellingPrice.toFixed(2)} {profitability.currency}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2">
+                <dt className="text-gray-500">Expenses</dt>
+                <dd>
+                  − {(profitability.expenses[profitability.currency] ?? 0).toFixed(2)} {profitability.currency}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2">
+                <dt className="text-gray-500">Outstanding transport cost</dt>
+                <dd>
+                  − {profitability.outstandingTransportCost.toFixed(2)} {profitability.transportCost.currency}
+                </dd>
+              </div>
+              {profitability.caution.type === 'actual' && (
+                <div className="flex justify-between py-2">
+                  <dt className="text-gray-500">Actual caution paid</dt>
+                  <dd>
+                    + {profitability.caution.deposited.toFixed(2)} {profitability.caution.currency}
+                  </dd>
+                </div>
+              )}
+              <div className="flex justify-between py-2 font-medium">
+                <dt>Profit</dt>
+                <dd className={profitability.profit >= 0 ? 'text-green-700' : 'text-red-700'}>
+                  {profitability.profit.toFixed(2)} {profitability.currency}
+                </dd>
+              </div>
+            </dl>
           </div>
-          <dl className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <dt className="text-gray-500">Selling Price</dt>
-              <dd>
-                {profitability.sellingPrice.toFixed(2)} {profitability.currency}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Expenses</dt>
-              <dd>
-                {(profitability.expenses[profitability.currency] ?? 0).toFixed(2)} {profitability.currency}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Profit</dt>
-              <dd className={profitability.profit >= 0 ? 'text-green-700' : 'text-red-700'}>
-                {profitability.profit.toFixed(2)} {profitability.currency}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Balance due from client</dt>
-              <dd>
-                {profitability.balanceDue.toFixed(2)} {profitability.currency}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Outstanding transport cost</dt>
-              <dd>
-                {profitability.outstandingTransportCost.toFixed(2)} {profitability.transportCost.currency}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">File cash balance</dt>
-              <dd>
-                {profitability.cashBalance.USD.toFixed(2)} USD / {profitability.cashBalance.CDF.toFixed(2)} CDF
-              </dd>
-            </div>
-          </dl>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-sm font-medium text-gray-700 mb-3">Other figures</h2>
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt className="text-gray-500">Balance due from client</dt>
+                <dd>
+                  {profitability.balanceDue.toFixed(2)} {profitability.currency}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">File cash balance</dt>
+                <dd>
+                  {profitability.cashBalance.USD.toFixed(2)} USD / {profitability.cashBalance.CDF.toFixed(2)} CDF
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-sm font-medium text-gray-700 mb-3">Caution</h2>
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt className="text-gray-500">Type</dt>
+                <dd className="capitalize">{profitability.caution.type}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Quoted amount</dt>
+                <dd>
+                  {profitability.caution.amount.toFixed(2)} {profitability.caution.currency}
+                </dd>
+              </div>
+              {profitability.caution.type === 'actual' && (
+                <>
+                  <div>
+                    <dt className="text-gray-500">Paid to shipping line</dt>
+                    <dd>
+                      {profitability.caution.deposited.toFixed(2)} {profitability.caution.currency}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-500">Refunded so far</dt>
+                    <dd>
+                      {profitability.caution.refunded.toFixed(2)} {profitability.caution.currency}
+                    </dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-gray-500">Still to collect from shipping line</dt>
+                    <dd
+                      className={
+                        profitability.caution.outstandingToCollect > 0 ? 'text-yellow-700 font-medium' : 'text-gray-700'
+                      }
+                    >
+                      {profitability.caution.outstandingToCollect.toFixed(2)} {profitability.caution.currency}
+                      {profitability.caution.outstandingToCollect > 0 ? ' — pending refund' : ' — settled'}
+                    </dd>
+                  </div>
+                </>
+              )}
+            </dl>
+          </div>
         </div>
       )}
     </div>

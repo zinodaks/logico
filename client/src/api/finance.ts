@@ -16,6 +16,14 @@ export interface FileProfitability {
   transportCost: { amount: number; currency: 'USD' | 'CDF' };
   outstandingTransportCost: number;
   cashBalance: CurrencyTotals;
+  caution: {
+    type: 'actual' | 'interest';
+    amount: number;
+    currency: 'USD' | 'CDF';
+    deposited: number;
+    refunded: number;
+    outstandingToCollect: number;
+  };
 }
 
 export interface ClientProfitability {

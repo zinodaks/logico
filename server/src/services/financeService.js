@@ -86,11 +86,17 @@ export async function computeFileCashBalance(fileId) {
 
 /**
  * Cash-basis profitability for a single file: sellingPrice minus recorded
- * expenses (agent/transporter/generic payments) in the selling price's
- * currency. Caution deposit/refund payments are excluded — they're a
- * refundable deposit, not revenue or cost. Client payments are reported
- * separately as collections against the selling price (receivables), not
- * folded into profit.
+ * expenses (agent/transporter/generic payments) minus the transporter's
+ * still-outstanding balance (the fixed transport cost is a known,
+ * committed liability the moment the transporter is assigned, so it hits
+ * profit in full even before it's actually been paid out — unlike agent
+ * fees or generic expenses, which only count once actually incurred),
+ * plus any actual-type caution deposit already paid to the shipping line
+ * (a real cash outflow, but since it's a refundable deposit rather than a
+ * cost, it's added back so it doesn't permanently depress profit while
+ * awaiting refund). Client payments are reported separately as
+ * collections against the selling price (receivables), not folded into
+ * profit.
  */
 export async function computeFileProfitability(fileId) {
   const file = await ShipmentFile.findById(fileId);
@@ -116,11 +122,33 @@ export async function computeFileProfitability(fileId) {
   ]);
   const transportPaid = toCurrencyTotals(transportPaidRows);
 
+  const cautionDepositRows = await Payment.aggregate([
+    { $match: { file: objectId, direction: 'caution_deposit' } },
+    { $group: { _id: '$currency', total: { $sum: '$amount' } } },
+  ]);
+  const cautionDeposited = toCurrencyTotals(cautionDepositRows);
+
+  const cautionRefundRows = await Payment.aggregate([
+    { $match: { file: objectId, direction: 'caution_refund' } },
+    { $group: { _id: '$currency', total: { $sum: '$amount' } } },
+  ]);
+  const cautionRefunded = toCurrencyTotals(cautionRefundRows);
+
   const currency = file.sellingPrice.currency;
-  const profit = file.sellingPrice.amount - (expenses[currency] ?? 0);
-  const balanceDue = file.sellingPrice.amount - (collected[currency] ?? 0);
   const outstandingTransportCost = file.transportCost.amount - (transportPaid[file.transportCost.currency] ?? 0);
+  const outstandingTransportCostSameCurrency = file.transportCost.currency === currency ? outstandingTransportCost : 0;
+  const actualCautionPaid =
+    file.caution.type === 'actual' && file.caution.currency === currency ? cautionDeposited[currency] ?? 0 : 0;
+
+  const profit =
+    file.sellingPrice.amount - (expenses[currency] ?? 0) - outstandingTransportCostSameCurrency + actualCautionPaid;
+  const balanceDue = file.sellingPrice.amount - (collected[currency] ?? 0);
   const cashBalance = await computeFileCashBalance(fileId);
+
+  const cautionOutstandingToCollect =
+    file.caution.type === 'actual'
+      ? (cautionDeposited[file.caution.currency] ?? 0) - (cautionRefunded[file.caution.currency] ?? 0)
+      : 0;
 
   return {
     currency,
@@ -133,6 +161,14 @@ export async function computeFileProfitability(fileId) {
     transportCost: file.transportCost,
     outstandingTransportCost,
     cashBalance,
+    caution: {
+      type: file.caution.type,
+      amount: file.caution.amount,
+      currency: file.caution.currency,
+      deposited: cautionDeposited[file.caution.currency] ?? 0,
+      refunded: cautionRefunded[file.caution.currency] ?? 0,
+      outstandingToCollect: cautionOutstandingToCollect,
+    },
   };
 }
 
