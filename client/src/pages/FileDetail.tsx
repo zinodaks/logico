@@ -253,7 +253,7 @@ export default function FileDetail() {
               <thead className="bg-gray-100 text-left text-gray-600">
                 <tr>
                   <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Type</th>
+                  <th className="px-4 py-2">Category</th>
                   <th className="px-4 py-2">Payment Type</th>
                   <th className="px-4 py-2 text-right">Receipts (credit)</th>
                   <th className="px-4 py-2 text-right">Payments (debit)</th>

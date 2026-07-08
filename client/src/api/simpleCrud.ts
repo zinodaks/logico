@@ -2,8 +2,8 @@ import { api } from './client';
 
 export function simpleCrudApi<T, TCreate = Partial<T>>(resourcePath: string) {
   return {
-    async list(): Promise<T[]> {
-      const { data } = await api.get<{ items: T[] }>(resourcePath);
+    async list(params?: Record<string, string>): Promise<T[]> {
+      const { data } = await api.get<{ items: T[] }>(resourcePath, { params });
       return data.items;
     },
     async create(input: TCreate): Promise<T> {

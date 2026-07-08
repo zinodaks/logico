@@ -4,7 +4,7 @@ import { buildSimpleCrudController } from '../utils/simpleCrud.js';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
-const controller = buildSimpleCrudController(PaymentType, ['name']);
+const controller = buildSimpleCrudController(PaymentType, ['name', 'category'], ['category']);
 
 export const paymentTypesRouter = Router();
 paymentTypesRouter.use(requireAuth);

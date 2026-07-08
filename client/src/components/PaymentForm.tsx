@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPayment, type PaymentDirection } from '../api/payments';
 import { listFiles } from '../api/files';
 import { agentsApi } from '../api/agents';
 import { transportersApi } from '../api/transporters';
-import { paymentTypesApi } from '../api/paymentTypes';
+import { listPaymentTypesByCategory } from '../api/paymentTypes';
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export const DIRECTION_LABELS: Record<PaymentDirection, string> = {
   client_payment: 'Client payment (income)',
@@ -28,8 +32,6 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
   const { data: files } = useQuery({ queryKey: ['files-all'], queryFn: () => listFiles(), enabled: !lockedFileId });
   const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: agentsApi.list });
   const { data: transporters } = useQuery({ queryKey: ['transporters'], queryFn: transportersApi.list });
-  const { data: paymentTypes } = useQuery({ queryKey: ['payment-types'], queryFn: paymentTypesApi.list });
-
   const directionOptions = Object.entries(DIRECTION_LABELS).filter(
     ([value]) => !lockedFileId || value !== 'business_expense',
   );
@@ -41,8 +43,18 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
   const [paymentType, setPaymentType] = useState('');
   const [agent, setAgent] = useState('');
   const [transporter, setTransporter] = useState('');
+  const [date, setDate] = useState(todayIsoDate());
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const { data: paymentTypes } = useQuery({
+    queryKey: ['payment-types', direction],
+    queryFn: () => listPaymentTypesByCategory(direction),
+  });
+
+  useEffect(() => {
+    setPaymentType('');
+  }, [direction]);
 
   const createMutation = useMutation({
     mutationFn: createPayment,
@@ -55,6 +67,7 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
       }
       setAmount('');
       setNotes('');
+      setDate(todayIsoDate());
       setError(null);
       onSuccess?.();
     },
@@ -92,6 +105,7 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
       paymentType,
       agent: direction === 'agent_payment' ? agent : undefined,
       transporter: direction === 'transporter_payment' ? transporter : undefined,
+      date: date ? new Date(date).toISOString() : undefined,
       notes: notes || undefined,
     });
   }
@@ -101,7 +115,7 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div>
-        <label className="block text-sm text-gray-600 mb-1">Type</label>
+        <label className="block text-sm text-gray-600 mb-1">Category</label>
         <select
           value={direction}
           onChange={(e) => setDirection(e.target.value as PaymentDirection)}
@@ -190,11 +204,27 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
             </option>
           ))}
         </select>
+        {paymentTypes?.length === 0 && (
+          <p className="text-xs text-gray-400 mt-1">
+            No payment types defined for this category yet — add one on the Payment Types page.
+          </p>
+        )}
       </div>
 
-      <div>
-        <label className="block text-sm text-gray-600 mb-1">Notes</label>
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded" />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Date</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Notes</label>
+          <input value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded" />
+        </div>
       </div>
 
       <div className="flex gap-3">

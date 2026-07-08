@@ -33,7 +33,7 @@ export default function Payments() {
 
       <div className="mb-4">
         <select value={directionFilter} onChange={(e) => setDirectionFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded">
-          <option value="">All types</option>
+          <option value="">All categories</option>
           {Object.entries(DIRECTION_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -47,7 +47,7 @@ export default function Payments() {
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Date</th>
-              <th className="px-4 py-2">Type</th>
+              <th className="px-4 py-2">Category</th>
               <th className="px-4 py-2">File</th>
               <th className="px-4 py-2">Amount</th>
               <th className="px-4 py-2">Payment Type</th>

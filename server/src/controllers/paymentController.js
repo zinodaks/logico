@@ -1,11 +1,12 @@
 import { Payment, PAYMENT_DIRECTIONS } from '../models/Payment.js';
+import { PaymentType } from '../models/PaymentType.js';
 import { ApiError } from '../middleware/errorHandler.js';
 
 const POPULATE = [
   { path: 'file', select: 'blNumber' },
   { path: 'agent', select: 'name' },
   { path: 'transporter', select: 'name' },
-  { path: 'paymentType', select: 'name' },
+  { path: 'paymentType', select: 'name category' },
 ];
 
 export async function listPayments(req, res) {
@@ -47,6 +48,12 @@ export async function createPayment(req, res) {
   if (!amount || amount <= 0) throw new ApiError(400, 'amount must be greater than 0');
   if (!currency || !paymentType) throw new ApiError(400, 'currency and paymentType are required');
   validateDirectionFields(req.body);
+
+  const paymentTypeDoc = await PaymentType.findById(paymentType);
+  if (!paymentTypeDoc) throw new ApiError(404, 'Payment type not found');
+  if (paymentTypeDoc.category !== direction) {
+    throw new ApiError(400, 'That payment type does not belong to the selected category');
+  }
 
   const payment = await Payment.create({
     file: direction === 'business_expense' ? undefined : file,

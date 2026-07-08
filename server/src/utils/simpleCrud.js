@@ -6,11 +6,14 @@ import { ApiError } from '../middleware/errorHandler.js';
  * soft-delete shape. Client and File have enough extra behavior (documents,
  * snapshots) to stay hand-written.
  */
-export function buildSimpleCrudController(Model, fields) {
+export function buildSimpleCrudController(Model, fields, filterFields = []) {
   return {
     async list(req, res) {
       const includeInactive = req.query.includeInactive === 'true';
       const filter = includeInactive ? {} : { active: true };
+      for (const field of filterFields) {
+        if (req.query[field] !== undefined) filter[field] = req.query[field];
+      }
       const docs = await Model.find(filter).sort({ name: 1 });
       res.json({ items: docs });
     },

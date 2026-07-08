@@ -1,14 +1,7 @@
 import mongoose from 'mongoose';
+import { PAYMENT_CATEGORIES } from './paymentCategories.js';
 
-const DIRECTIONS = [
-  'client_payment',
-  'agent_payment',
-  'transporter_payment',
-  'generic_expense',
-  'business_expense',
-  'caution_deposit',
-  'caution_refund',
-];
+const DIRECTIONS = PAYMENT_CATEGORIES;
 
 const paymentSchema = new mongoose.Schema(
   {
