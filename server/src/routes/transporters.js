@@ -16,6 +16,7 @@ export const transportersRouter = Router();
 transportersRouter.use(requireAuth);
 transportersRouter.get('/', asyncHandler(controller.list));
 transportersRouter.post('/', asyncHandler(controller.create));
+transportersRouter.get('/:id', asyncHandler(controller.getOne));
 transportersRouter.patch('/:id', asyncHandler(controller.update));
 transportersRouter.delete('/:id', asyncHandler(controller.remove));
 
@@ -25,7 +26,9 @@ transportersRouter.get(
     const data = await buildTransporterStatementData(req.params.id);
     if (!data) throw new ApiError(404, 'Transporter not found');
 
-    if (req.query.format === 'xlsx') {
+    if (req.query.format === 'json') {
+      res.json(data);
+    } else if (req.query.format === 'xlsx') {
       await streamTransporterStatementXlsx(res, data);
     } else {
       streamTransporterStatementPdf(res, data);

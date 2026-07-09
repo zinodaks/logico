@@ -18,6 +18,12 @@ export function buildSimpleCrudController(Model, fields, filterFields = []) {
       res.json({ items: docs });
     },
 
+    async getOne(req, res) {
+      const doc = await Model.findById(req.params.id);
+      if (!doc) throw new ApiError(404, 'Not found');
+      res.json({ item: doc });
+    },
+
     async create(req, res) {
       const payload = {};
       for (const field of fields) {

@@ -174,7 +174,14 @@ export default function Payments() {
                   <td className="px-4 py-2 text-right">{isCredit ? `${p.amount.toFixed(2)} ${p.currency}` : ''}</td>
                   <td className="px-4 py-2 text-right">{!isCredit ? `${p.amount.toFixed(2)} ${p.currency}` : ''}</td>
                   <td className="px-4 py-2 text-right">
-                    <button className="text-red-600 underline" onClick={() => deleteMutation.mutate(p._id)}>
+                    <button
+                      className="text-red-600 underline"
+                      onClick={() => {
+                        if (window.confirm(`Delete this ${p.amount.toFixed(2)} ${p.currency} payment? This cannot be undone.`)) {
+                          deleteMutation.mutate(p._id);
+                        }
+                      }}
+                    >
                       Delete
                     </button>
                   </td>

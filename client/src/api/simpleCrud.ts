@@ -6,6 +6,10 @@ export function simpleCrudApi<T, TCreate = Partial<T>>(resourcePath: string) {
       const { data } = await api.get<{ items: T[] }>(resourcePath, { params });
       return data.items;
     },
+    async getOne(id: string): Promise<T> {
+      const { data } = await api.get<{ item: T }>(`${resourcePath}/${id}`);
+      return data.item;
+    },
     async create(input: TCreate): Promise<T> {
       const { data } = await api.post<{ item: T }>(resourcePath, input);
       return data.item;

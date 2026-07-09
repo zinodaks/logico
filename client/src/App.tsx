@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Team from './pages/Team';
 import Agents from './pages/Agents';
 import Transporters from './pages/Transporters';
+import TransporterDetail from './pages/TransporterDetail';
 import PaymentTypes from './pages/PaymentTypes';
 import Clients from './pages/Clients';
 import ClientDetail from './pages/ClientDetail';
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/payments" element={<Payments />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/transporters" element={<Transporters />} />
+            <Route path="/transporters/:id" element={<TransporterDetail />} />
             <Route path="/payment-types" element={<PaymentTypes />} />
             <Route path="/process-templates" element={<ProcessTemplates />} />
             <Route path="/profit-transfers" element={<ProfitTransfers />} />
