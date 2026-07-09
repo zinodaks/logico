@@ -6,6 +6,8 @@ import { paymentTypesApi, listPaymentTypesByCategory } from '../api/paymentTypes
 import { CREDIT_DIRECTIONS, DIRECTION_LABELS, PaymentForm } from '../components/PaymentForm';
 
 const PAGE_SIZE = 60;
+const selectClass = 'w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white';
+const labelClass = 'block text-xs font-medium text-gray-500 mb-1';
 
 export default function Payments() {
   const queryClient = useQueryClient();
@@ -32,6 +34,15 @@ export default function Payments() {
   if (fileFilter) filters.file = fileFilter;
   if (dateFrom) filters.from = dateFrom;
   if (dateTo) filters.to = dateTo;
+  const hasActiveFilters = Object.keys(filters).length > 0;
+
+  function clearFilters() {
+    setDirectionFilter('');
+    setPaymentTypeFilter('');
+    setFileFilter('');
+    setDateFrom('');
+    setDateTo('');
+  }
 
   const { data: pageData, isLoading } = useQuery({
     queryKey: ['payments', filters, page],
@@ -66,46 +77,60 @@ export default function Payments() {
 
       {showForm && <PaymentForm onSuccess={() => setShowForm(false)} />}
 
-      <div className="flex flex-wrap gap-3 mb-4">
-        <select value={directionFilter} onChange={(e) => setDirectionFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded">
-          <option value="">All categories</option>
-          {Object.entries(DIRECTION_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
+      <div className="bg-white rounded-lg shadow p-4 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div>
+            <label className={labelClass}>Category</label>
+            <select value={directionFilter} onChange={(e) => setDirectionFilter(e.target.value)} className={selectClass}>
+              <option value="">All categories</option>
+              {Object.entries(DIRECTION_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <select
-          value={paymentTypeFilter}
-          onChange={(e) => setPaymentTypeFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded"
-        >
-          <option value="">All payment types</option>
-          {paymentTypes?.map((pt) => (
-            <option key={pt._id} value={pt._id}>
-              {pt.name}
-            </option>
-          ))}
-        </select>
+          <div>
+            <label className={labelClass}>Payment type</label>
+            <select value={paymentTypeFilter} onChange={(e) => setPaymentTypeFilter(e.target.value)} className={selectClass}>
+              <option value="">All payment types</option>
+              {paymentTypes?.map((pt) => (
+                <option key={pt._id} value={pt._id}>
+                  {pt.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <select value={fileFilter} onChange={(e) => setFileFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded">
-          <option value="">All files</option>
-          {files?.map((f) => (
-            <option key={f._id} value={f._id}>
-              {f.blNumber} — {f.client.name}
-            </option>
-          ))}
-        </select>
+          <div>
+            <label className={labelClass}>File</label>
+            <select value={fileFilter} onChange={(e) => setFileFilter(e.target.value)} className={selectClass}>
+              <option value="">All files</option>
+              {files?.map((f) => (
+                <option key={f._id} value={f._id}>
+                  {f.blNumber} — {f.client.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-500">From</label>
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-gray-300 rounded" />
+          <div>
+            <label className={labelClass}>From</label>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={selectClass} />
+          </div>
+
+          <div>
+            <label className={labelClass}>To</label>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={selectClass} />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-500">To</label>
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-gray-300 rounded" />
-        </div>
+
+        {hasActiveFilters && (
+          <button onClick={clearFilters} className="mt-3 text-sm text-blue-600 underline">
+            Clear filters
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -116,9 +141,9 @@ export default function Payments() {
               <th className="px-4 py-2">Category</th>
               <th className="px-4 py-2">File</th>
               <th className="px-4 py-2">Payment Type</th>
+              <th className="px-4 py-2">Notes</th>
               <th className="px-4 py-2 text-right">Receipts (credit)</th>
               <th className="px-4 py-2 text-right">Payments (debit)</th>
-              <th className="px-4 py-2">Notes</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -140,14 +165,14 @@ export default function Payments() {
             {payments?.map((p) => {
               const isCredit = CREDIT_DIRECTIONS.includes(p.direction);
               return (
-                <tr key={p._id} className={`border-t border-gray-100 ${isCredit ? 'bg-gray-50' : ''}`}>
+                <tr key={p._id} className={`border-t border-gray-100 ${isCredit ? 'bg-gray-200' : ''}`}>
                   <td className="px-4 py-2">{new Date(p.date).toLocaleDateString()}</td>
                   <td className="px-4 py-2">{DIRECTION_LABELS[p.direction]}</td>
                   <td className="px-4 py-2">{p.file?.blNumber ?? '—'}</td>
                   <td className="px-4 py-2">{p.paymentType?.name}</td>
+                  <td className="px-4 py-2">{p.notes}</td>
                   <td className="px-4 py-2 text-right">{isCredit ? `${p.amount.toFixed(2)} ${p.currency}` : ''}</td>
                   <td className="px-4 py-2 text-right">{!isCredit ? `${p.amount.toFixed(2)} ${p.currency}` : ''}</td>
-                  <td className="px-4 py-2">{p.notes}</td>
                   <td className="px-4 py-2 text-right">
                     <button className="text-red-600 underline" onClick={() => deleteMutation.mutate(p._id)}>
                       Delete
