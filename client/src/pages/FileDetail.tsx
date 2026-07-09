@@ -5,11 +5,9 @@ import { fileStatementUrl, getFile, toggleFileStep, updateFileStatus, updateFile
 import { listPayments } from '../api/payments';
 import { getFileProfitability } from '../api/finance';
 import { transportersApi } from '../api/transporters';
-import { DIRECTION_LABELS, PaymentForm } from '../components/PaymentForm';
+import { CREDIT_DIRECTIONS, DIRECTION_LABELS, PaymentForm } from '../components/PaymentForm';
 
 type Tab = 'overview' | 'checklist' | 'ledger' | 'profitability';
-
-const CREDIT_DIRECTIONS = ['client_payment', 'caution_refund'];
 
 export default function FileDetail() {
   const { id } = useParams<{ id: string }>();
@@ -52,7 +50,7 @@ export default function FileDetail() {
 
   const { data: filePayments } = useQuery({
     queryKey: ['payments', { file: id }],
-    queryFn: () => listPayments({ file: id! }),
+    queryFn: () => listPayments({ file: id!, limit: '1000' }),
     enabled: !!id && tab === 'ledger',
   });
 

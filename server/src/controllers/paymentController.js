@@ -13,6 +13,7 @@ export async function listPayments(req, res) {
   const filter = {};
   if (req.query.file) filter.file = req.query.file;
   if (req.query.direction) filter.direction = req.query.direction;
+  if (req.query.paymentType) filter.paymentType = req.query.paymentType;
   if (req.query.agent) filter.agent = req.query.agent;
   if (req.query.transporter) filter.transporter = req.query.transporter;
   if (req.query.currency) filter.currency = req.query.currency;
@@ -22,8 +23,19 @@ export async function listPayments(req, res) {
     if (req.query.to) filter.date.$lte = new Date(req.query.to);
   }
 
-  const payments = await Payment.find(filter).populate(POPULATE).sort({ date: -1 });
-  res.json({ items: payments });
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 60));
+
+  const [items, total] = await Promise.all([
+    Payment.find(filter)
+      .populate(POPULATE)
+      .sort({ date: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    Payment.countDocuments(filter),
+  ]);
+
+  res.json({ items, total, page, limit });
 }
 
 export async function getPayment(req, res) {

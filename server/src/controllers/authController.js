@@ -62,6 +62,7 @@ export async function login(req, res) {
 }
 
 export async function logout(req, res) {
+  // eslint-disable-next-line no-unused-vars
   const { maxAge: _maxAge, ...clearOptions } = cookieOptions;
   res.clearCookie(env.cookieName, clearOptions);
   res.status(204).end();

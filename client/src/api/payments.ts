@@ -15,7 +15,7 @@ export interface Payment {
   direction: PaymentDirection;
   amount: number;
   currency: 'USD' | 'CDF';
-  paymentType: { _id: string; name: string };
+  paymentType: { _id: string; name: string; category: PaymentDirection };
   agent?: { _id: string; name: string };
   transporter?: { _id: string; name: string };
   date: string;
@@ -34,10 +34,23 @@ export interface PaymentInput {
   notes?: string;
 }
 
+export interface PaymentsPage {
+  items: Payment[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export async function listPayments(filters: Record<string, string> = {}): Promise<Payment[]> {
   const params = new URLSearchParams(filters);
   const { data } = await api.get<{ items: Payment[] }>(`/payments?${params}`);
   return data.items;
+}
+
+export async function listPaymentsPage(filters: Record<string, string> = {}): Promise<PaymentsPage> {
+  const params = new URLSearchParams(filters);
+  const { data } = await api.get<PaymentsPage>(`/payments?${params}`);
+  return data;
 }
 
 export async function createPayment(input: PaymentInput): Promise<Payment> {

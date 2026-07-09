@@ -10,6 +10,9 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Directions that represent money coming in (receipts), for credit/debit ledger displays. */
+export const CREDIT_DIRECTIONS: PaymentDirection[] = ['client_payment', 'caution_refund'];
+
 export const DIRECTION_LABELS: Record<PaymentDirection, string> = {
   client_payment: 'Client payment (income)',
   agent_payment: 'Agent payment',
