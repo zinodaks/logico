@@ -45,7 +45,7 @@ export default function FileDetail() {
 
   const { data: transporters } = useQuery({
     queryKey: ['transporters'],
-    queryFn: transportersApi.list,
+    queryFn: () => transportersApi.list(),
     enabled: changingTransporter,
   });
 

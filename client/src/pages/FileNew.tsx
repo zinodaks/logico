@@ -9,8 +9,8 @@ import { transportersApi } from '../api/transporters';
 export default function FileNew() {
   const navigate = useNavigate();
   const { data: clients } = useQuery({ queryKey: ['clients'], queryFn: listClients });
-  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: agentsApi.list });
-  const { data: transporters } = useQuery({ queryKey: ['transporters'], queryFn: transportersApi.list });
+  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: () => agentsApi.list() });
+  const { data: transporters } = useQuery({ queryKey: ['transporters'], queryFn: () => transportersApi.list() });
 
   const [client, setClient] = useState('');
   const [processType, setProcessType] = useState<'IM4' | 'TR8'>('IM4');

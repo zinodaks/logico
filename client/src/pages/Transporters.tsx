@@ -5,7 +5,7 @@ import { transportersApi } from '../api/transporters';
 
 export default function Transporters() {
   const queryClient = useQueryClient();
-  const { data: items, isLoading } = useQuery({ queryKey: ['transporters'], queryFn: transportersApi.list });
+  const { data: items, isLoading } = useQuery({ queryKey: ['transporters'], queryFn: () => transportersApi.list() });
 
   const [name, setName] = useState('');
   const [cost, setCost] = useState('');

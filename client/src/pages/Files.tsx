@@ -9,7 +9,7 @@ export default function Files() {
   const [processType, setProcessType] = useState('');
   const [agent, setAgent] = useState('');
 
-  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: agentsApi.list });
+  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: () => agentsApi.list() });
 
   const filters: Record<string, string> = {};
   if (status) filters.status = status;

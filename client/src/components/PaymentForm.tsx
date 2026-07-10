@@ -33,8 +33,8 @@ interface Props {
 export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
   const queryClient = useQueryClient();
   const { data: files } = useQuery({ queryKey: ['files-all'], queryFn: () => listFiles(), enabled: !lockedFileId });
-  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: agentsApi.list });
-  const { data: transporters } = useQuery({ queryKey: ['transporters'], queryFn: transportersApi.list });
+  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: () => agentsApi.list() });
+  const { data: transporters } = useQuery({ queryKey: ['transporters'], queryFn: () => transportersApi.list() });
   const directionOptions = Object.entries(DIRECTION_LABELS).filter(
     ([value]) => !lockedFileId || value !== 'business_expense',
   );
