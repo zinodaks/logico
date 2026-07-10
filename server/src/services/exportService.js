@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
+import { formatDate } from '../utils/formatDate.js';
 
 function formatMoney(amount) {
   return amount.toFixed(2);
@@ -103,7 +104,7 @@ export function streamFileStatementPdf(res, { file, currency, rows, totalDebit, 
 
   for (const row of rows) {
     const y = doc.y + 4;
-    doc.text(new Date(row.date).toLocaleDateString(), colX[0], y);
+    doc.text(formatDate(row.date), colX[0], y);
     doc.text(row.description, colX[1], y);
     doc.text(row.debit ? `${formatMoney(row.debit)} ${currency}` : '', colX[2], y);
     doc.text(row.credit ? `${formatMoney(row.credit)} ${currency}` : '', colX[3], y);
@@ -130,7 +131,7 @@ export async function streamFileStatementXlsx(res, { file, currency, rows, total
   sheet.addRow(['Date', 'Description', 'Debit', 'Credit']);
 
   for (const row of rows) {
-    sheet.addRow([new Date(row.date).toLocaleDateString(), row.description, row.debit || '', row.credit || '']);
+    sheet.addRow([formatDate(row.date), row.description, row.debit || '', row.credit || '']);
   }
 
   sheet.addRow([]);

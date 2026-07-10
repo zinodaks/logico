@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createProfitTransfer, deleteProfitTransfer, listProfitTransfers } from '../api/profitTransfers';
 import { getCashBalance } from '../api/finance';
+import { formatDate } from '../lib/formatDate';
 
 export default function ProfitTransfers() {
   const queryClient = useQueryClient();
@@ -109,7 +110,7 @@ export default function ProfitTransfers() {
             )}
             {transfers?.map((t) => (
               <tr key={t._id} className="border-t border-gray-100">
-                <td className="px-4 py-2">{new Date(t.date).toLocaleDateString()}</td>
+                <td className="px-4 py-2">{formatDate(t.date)}</td>
                 <td className="px-4 py-2">
                   {t.amount.toFixed(2)} {t.currency}
                 </td>

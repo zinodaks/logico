@@ -12,6 +12,7 @@ import {
 } from '../api/clients';
 import { listFiles } from '../api/files';
 import { getClientProfitability } from '../api/finance';
+import { formatDate } from '../lib/formatDate';
 
 type Tab = 'info' | 'documents' | 'files' | 'statement';
 
@@ -170,7 +171,7 @@ export default function ClientDetail() {
                   <tr key={doc._id} className="border-t border-gray-100">
                     <td className="px-4 py-2">{doc.filename}</td>
                     <td className="px-4 py-2">{(doc.size / 1024).toFixed(1)} KB</td>
-                    <td className="px-4 py-2">{new Date(doc.uploadedAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-2">{formatDate(doc.uploadedAt)}</td>
                     <td className="px-4 py-2 text-right space-x-3">
                       <a
                         href={clientDocumentDownloadUrl(client._id, doc._id)}

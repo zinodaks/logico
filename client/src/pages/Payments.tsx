@@ -4,6 +4,7 @@ import { deletePayment, listPaymentsPage, type PaymentDirection } from '../api/p
 import { listFiles } from '../api/files';
 import { paymentTypesApi, listPaymentTypesByCategory } from '../api/paymentTypes';
 import { CREDIT_DIRECTIONS, DIRECTION_LABELS, PaymentForm } from '../components/PaymentForm';
+import { formatDate } from '../lib/formatDate';
 
 const PAGE_SIZE = 60;
 const selectClass = 'w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white';
@@ -166,7 +167,7 @@ export default function Payments() {
               const isCredit = CREDIT_DIRECTIONS.includes(p.direction);
               return (
                 <tr key={p._id} className={`border-t border-gray-100 ${isCredit ? 'bg-gray-200' : ''}`}>
-                  <td className="px-4 py-2">{new Date(p.date).toLocaleDateString()}</td>
+                  <td className="px-4 py-2">{formatDate(p.date)}</td>
                   <td className="px-4 py-2">{DIRECTION_LABELS[p.direction]}</td>
                   <td className="px-4 py-2">{p.file?.blNumber ?? '—'}</td>
                   <td className="px-4 py-2">{p.paymentType?.name}</td>

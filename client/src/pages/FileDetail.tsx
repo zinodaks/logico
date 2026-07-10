@@ -6,6 +6,7 @@ import { listPayments } from '../api/payments';
 import { getFileProfitability } from '../api/finance';
 import { transportersApi } from '../api/transporters';
 import { CREDIT_DIRECTIONS, DIRECTION_LABELS, PaymentForm } from '../components/PaymentForm';
+import { formatDate } from '../lib/formatDate';
 
 type Tab = 'overview' | 'checklist' | 'ledger' | 'profitability';
 
@@ -276,7 +277,7 @@ export default function FileDetail() {
                 )}
                 {ledgerRows?.map((r) => (
                   <tr key={r._id} className="border-t border-gray-100">
-                    <td className="px-4 py-2">{new Date(r.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-2">{formatDate(r.date)}</td>
                     <td className="px-4 py-2">{DIRECTION_LABELS[r.direction]}</td>
                     <td className="px-4 py-2">{r.paymentType?.name}</td>
                     <td className="px-4 py-2 text-right">{r.credit ? `${r.credit.toFixed(2)} ${r.currency}` : ''}</td>
