@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://logico-qr7f.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
