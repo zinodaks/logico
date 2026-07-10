@@ -44,8 +44,8 @@ export default function PaymentTypes() {
 
       <div className="bg-white rounded-lg shadow p-6 mb-8 max-w-lg">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Add payment type</h2>
-        <div className="flex gap-2 items-end">
-          <div className="flex-1">
+        <div className="flex flex-wrap gap-2 items-end">
+          <div className="flex-1 min-w-[160px]">
             <label className="block text-sm text-gray-600 mb-1">Category</label>
             <select
               value={category}
@@ -59,7 +59,7 @@ export default function PaymentTypes() {
               ))}
             </select>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-[160px]">
             <label className="block text-sm text-gray-600 mb-1">Name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded" />
           </div>
@@ -85,8 +85,8 @@ export default function PaymentTypes() {
         {byCategory.map(({ category: cat, items }) => (
           <div key={cat}>
             <h2 className="text-sm font-medium text-gray-600 mb-2">{DIRECTION_LABELS[cat]}</h2>
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="bg-white rounded-lg shadow overflow-x-auto">
+              <table className="w-full text-sm min-w-[480px]">
                 <tbody>
                   {items.length === 0 && (
                     <tr>

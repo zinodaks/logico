@@ -36,7 +36,7 @@ export default function Transporters() {
     <div>
       <h1 className="text-2xl font-semibold text-gray-800 mb-6">Transporters</h1>
 
-      <form onSubmit={handleCreate} className="flex gap-2 mb-6 items-end">
+      <form onSubmit={handleCreate} className="flex flex-wrap gap-2 mb-6 items-end">
         <div>
           <label className="block text-sm text-gray-600 mb-1">Name</label>
           <input
@@ -75,8 +75,8 @@ export default function Transporters() {
         </button>
       </form>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Name</th>

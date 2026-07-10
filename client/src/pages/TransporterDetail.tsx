@@ -45,8 +45,8 @@ export default function TransporterDetail() {
 
       <h2 className="text-lg font-medium text-gray-700 mb-3">Statement</h2>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Client</th>

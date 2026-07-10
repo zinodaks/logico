@@ -16,7 +16,7 @@ export default function Dashboard() {
       <h1 className="text-2xl font-semibold text-gray-800 mb-2">Dashboard</h1>
       <p className="text-gray-500 mb-6">Welcome, {user?.name}.</p>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm text-gray-500 mb-1">Cash balance (USD)</p>
           <p className="text-2xl font-semibold text-gray-800">{(balance?.USD ?? 0).toFixed(2)}</p>

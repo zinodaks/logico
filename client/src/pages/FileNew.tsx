@@ -92,7 +92,7 @@ export default function FileNew() {
 
         <div>
           <label className="block text-sm text-gray-600 mb-1">Process</label>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             {(['IM4', 'TR8'] as const).map((p) => (
               <label key={p} className="flex items-center gap-1">
                 <input type="radio" checked={processType === p} onChange={() => setProcessType(p)} />
@@ -102,7 +102,7 @@ export default function FileNew() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">BL Number</label>
             <input value={blNumber} onChange={(e) => setBlNumber(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded" />
@@ -121,7 +121,7 @@ export default function FileNew() {
         <div>
           <label className="block text-sm text-gray-600 mb-2">Containers</label>
           {containers.map((c, i) => (
-            <div key={i} className="flex gap-2 items-center mb-2">
+            <div key={i} className="flex flex-wrap gap-2 items-center mb-2">
               <input
                 placeholder="Container number"
                 value={c.number}
@@ -144,7 +144,7 @@ export default function FileNew() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">Selling Price</label>
             <input
@@ -167,7 +167,7 @@ export default function FileNew() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">Agent</label>
             <select value={agent} onChange={(e) => setAgent(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded">
@@ -202,7 +202,7 @@ export default function FileNew() {
 
         <div>
           <label className="block text-sm text-gray-600 mb-2">Caution</label>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <label className="flex items-center gap-1">
               <input type="radio" checked={cautionType === 'actual'} onChange={() => setCautionType('actual')} />
               Actual (we pay the shipping line directly)

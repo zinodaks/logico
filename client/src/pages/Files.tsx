@@ -23,14 +23,14 @@ export default function Files() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-wrap justify-between items-center gap-2 mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">Files</h1>
         <Link to="/files/new" className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">
           New file
         </Link>
       </div>
 
-      <div className="flex gap-4 mb-4">
+      <div className="flex flex-wrap gap-4 mb-4">
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="px-3 py-2 border border-gray-300 rounded">
           <option value="">All statuses</option>
           <option value="open">Open</option>
@@ -55,8 +55,8 @@ export default function Files() {
         </select>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm min-w-[760px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">BL Number</th>

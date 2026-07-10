@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,6 +20,7 @@ const navItems = [
 export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function handleLogout() {
     await logout();
@@ -26,15 +28,29 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-56 shrink-0 bg-gray-900 text-gray-200 flex flex-col">
-        <div className="px-4 py-4 text-lg font-semibold text-white">Cash Flow</div>
-        <nav className="flex-1 overflow-y-auto">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
+      <div className="md:hidden flex items-center justify-between bg-gray-900 text-white px-4 py-3 sticky top-0 z-20">
+        <span className="text-lg font-semibold">Cash Flow</span>
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Toggle menu"
+          className="text-gray-200 hover:text-white text-xl leading-none px-2 py-1"
+        >
+          {menuOpen ? '✕' : '☰'}
+        </button>
+      </div>
+
+      <aside
+        className={`${menuOpen ? 'flex' : 'hidden'} md:flex w-full md:w-56 md:shrink-0 bg-gray-900 text-gray-200 flex-col md:min-h-screen`}
+      >
+        <div className="hidden md:block px-4 py-4 text-lg font-semibold text-white">Cash Flow</div>
+        <nav className="flex-1 overflow-y-auto max-h-[70vh] md:max-h-none">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
+              onClick={() => setMenuOpen(false)}
               className={({ isActive }) =>
                 `block px-4 py-2 text-sm hover:bg-gray-800 ${isActive ? 'bg-gray-800 text-white' : ''}`
               }
@@ -50,7 +66,8 @@ export function AppLayout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 p-8">
+
+      <main className="flex-1 min-w-0 p-4 sm:p-6 md:p-8">
         <Outlet />
       </main>
     </div>

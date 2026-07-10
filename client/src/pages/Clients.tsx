@@ -46,7 +46,7 @@ export default function Clients() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-lg shadow p-6 mb-6 max-w-2xl grid grid-cols-2 gap-4">
+        <form onSubmit={handleCreate} className="bg-white rounded-lg shadow p-6 mb-6 max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block text-sm text-gray-600 mb-1">Name</label>
             <input
@@ -101,8 +101,8 @@ export default function Clients() {
         </form>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Name</th>

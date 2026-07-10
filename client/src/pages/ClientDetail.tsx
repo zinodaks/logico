@@ -86,7 +86,7 @@ export default function ClientDetail() {
         <div className="bg-white rounded-lg shadow p-6 max-w-xl">
           {Object.keys(form).length === 0 ? (
             <>
-              <dl className="grid grid-cols-2 gap-4 text-sm">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
                   <dt className="text-gray-500">Address</dt>
                   <dd>{client.address}</dd>
@@ -114,7 +114,7 @@ export default function ClientDetail() {
                 e.preventDefault();
                 updateMutation.mutate(form, { onSuccess: () => setForm({}) });
               }}
-              className="grid grid-cols-2 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
               {(['name', 'address', 'rccm', 'identificationNationale', 'nif'] as const).map((field) => (
                 <div key={field} className={field === 'name' || field === 'address' ? 'col-span-2' : ''}>
@@ -149,8 +149,8 @@ export default function ClientDetail() {
               </a>
             )}
           </div>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-gray-100 text-left text-gray-600">
                 <tr>
                   <th className="px-4 py-2">Filename</th>
@@ -244,8 +244,8 @@ function ClientFilesTab({ clientId }: { clientId: string }) {
           </div>
         </div>
       )}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">BL Number</th>

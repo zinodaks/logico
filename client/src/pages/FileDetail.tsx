@@ -75,8 +75,8 @@ export default function FileDetail() {
 
   return (
     <div>
-      <div className="flex justify-between items-start mb-2">
-        <h1 className="text-2xl font-semibold text-gray-800">{file.blNumber}</h1>
+      <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+        <h1 className="text-2xl font-semibold text-gray-800 break-all">{file.blNumber}</h1>
         <div className="flex items-center gap-3">
           <span className={`text-sm capitalize ${file.status === 'open' ? 'text-green-600' : 'text-gray-500'}`}>
             {file.status}
@@ -94,7 +94,7 @@ export default function FileDetail() {
       </p>
 
       {profitability && (
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6">
           <div className="bg-white rounded-lg shadow px-4 py-3">
             <p className="text-xs text-gray-500">File cash balance</p>
             <p className="text-lg font-semibold text-gray-800">
@@ -124,7 +124,7 @@ export default function FileDetail() {
         </div>
       )}
 
-      <div className="flex gap-4 border-b border-gray-200 mb-6">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 border-b border-gray-200 mb-6">
         {(['overview', 'checklist', 'ledger', 'profitability'] as Tab[]).map((t) => (
           <button
             key={t}
@@ -138,7 +138,7 @@ export default function FileDetail() {
 
       {tab === 'overview' && (
         <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
-          <dl className="grid grid-cols-2 gap-4 text-sm">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">Shipping Line</dt>
               <dd>{file.shippingLine}</dd>
@@ -159,7 +159,7 @@ export default function FileDetail() {
               <dt className="text-gray-500">Transporter</dt>
               <dd>
                 {changingTransporter ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <select
                       value={newTransporter}
                       onChange={(e) => setNewTransporter(e.target.value)}
@@ -235,8 +235,8 @@ export default function FileDetail() {
 
       {tab === 'ledger' && (
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-3">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <div className="flex flex-wrap gap-3">
               <a href={fileStatementUrl(file._id, 'pdf')} className="text-blue-600 underline text-sm">
                 Export client statement (PDF)
               </a>
@@ -256,8 +256,8 @@ export default function FileDetail() {
             <PaymentForm lockedFileId={file._id} onSuccess={() => setShowPaymentForm(false)} onCancel={() => setShowPaymentForm(false)} />
           )}
 
-          <div className="bg-white rounded-lg shadow overflow-hidden max-w-3xl">
-            <table className="w-full text-sm">
+          <div className="bg-white rounded-lg shadow overflow-x-auto max-w-3xl">
+            <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-gray-100 text-left text-gray-600">
                 <tr>
                   <th className="px-4 py-2">Date</th>
@@ -355,7 +355,7 @@ export default function FileDetail() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-sm font-medium text-gray-700 mb-3">Other figures</h2>
-            <dl className="grid grid-cols-2 gap-4 text-sm">
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <dt className="text-gray-500">Balance due from client</dt>
                 <dd>
@@ -373,7 +373,7 @@ export default function FileDetail() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-sm font-medium text-gray-700 mb-3">Caution</h2>
-            <dl className="grid grid-cols-2 gap-4 text-sm">
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <dt className="text-gray-500">Type</dt>
                 <dd className="capitalize">{profitability.caution.type}</dd>

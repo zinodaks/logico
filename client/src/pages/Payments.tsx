@@ -69,7 +69,7 @@ export default function Payments() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-wrap justify-between items-center gap-2 mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">Payments</h1>
         <button onClick={() => setShowForm((v) => !v)} className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">
           {showForm ? 'Cancel' : 'Record payment'}
@@ -79,7 +79,7 @@ export default function Payments() {
       {showForm && <PaymentForm onSuccess={() => setShowForm(false)} />}
 
       <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label className={labelClass}>Category</label>
             <select value={directionFilter} onChange={(e) => setDirectionFilter(e.target.value)} className={selectClass}>
@@ -134,8 +134,8 @@ export default function Payments() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm min-w-[960px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Date</th>
@@ -193,7 +193,7 @@ export default function Payments() {
         </table>
       </div>
 
-      <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+      <div className="flex flex-wrap items-center justify-between gap-2 mt-4 text-sm text-gray-600">
         <p>
           {total === 0 ? 'No results' : `Showing page ${page} of ${totalPages} (${total} total)`}
         </p>

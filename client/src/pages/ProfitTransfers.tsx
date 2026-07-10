@@ -57,7 +57,7 @@ export default function ProfitTransfers() {
 
       <div className="bg-white rounded-lg shadow p-6 mb-6 max-w-md space-y-4">
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">Amount</label>
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded" />
@@ -83,8 +83,8 @@ export default function ProfitTransfers() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden max-w-2xl">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow overflow-x-auto max-w-2xl">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Date</th>

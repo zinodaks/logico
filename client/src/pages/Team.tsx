@@ -48,8 +48,8 @@ export default function Team() {
     <div>
       <h1 className="text-2xl font-semibold text-gray-800 mb-6">Team</h1>
 
-      <div className="bg-white rounded-lg shadow mb-8 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg shadow mb-8 overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-100 text-left text-gray-600">
             <tr>
               <th className="px-4 py-2">Name</th>
