@@ -336,13 +336,21 @@ export default function FileDetail() {
                   − {profitability.outstandingTransportCost.toFixed(2)} {profitability.transportCost.currency}
                 </dd>
               </div>
-              {profitability.caution.type === 'actual' && (
-                <div className="flex justify-between py-2">
-                  <dt className="text-gray-500">Actual caution paid</dt>
-                  <dd>
-                    + {profitability.caution.deposited.toFixed(2)} {profitability.caution.currency}
-                  </dd>
-                </div>
+              {profitability.caution.type === 'actual' && profitability.caution.deposited > 0 && (
+                <>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-gray-500">Actual caution paid</dt>
+                    <dd>
+                      − {profitability.caution.deposited.toFixed(2)} {profitability.caution.currency}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-gray-500">Caution to be refunded</dt>
+                    <dd>
+                      + {profitability.caution.deposited.toFixed(2)} {profitability.caution.currency}
+                    </dd>
+                  </div>
+                </>
               )}
               <div className="flex justify-between py-2 font-medium">
                 <dt>Profit</dt>

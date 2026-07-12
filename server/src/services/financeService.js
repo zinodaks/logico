@@ -91,12 +91,13 @@ export async function computeFileCashBalance(fileId) {
  * committed liability the moment the transporter is assigned, so it hits
  * profit in full even before it's actually been paid out — unlike agent
  * fees or generic expenses, which only count once actually incurred),
- * plus any actual-type caution deposit already paid to the shipping line
- * (a real cash outflow, but since it's a refundable deposit rather than a
- * cost, it's added back so it doesn't permanently depress profit while
- * awaiting refund). Client payments are reported separately as
- * collections against the selling price (receivables), not folded into
- * profit.
+ * Any actual-type caution deposit already paid to the shipping line is
+ * first folded into actual expenses (it's a real cash outflow) and then
+ * added back in full, regardless of how much has been refunded so far —
+ * since the deposit always comes back whole, it should never move profit
+ * up or down, not even partially as refunds trickle in. Client payments
+ * are reported separately as collections against the selling price
+ * (receivables), not folded into profit.
  */
 export async function computeFileProfitability(fileId) {
   const file = await ShipmentFile.findById(fileId);
@@ -140,8 +141,8 @@ export async function computeFileProfitability(fileId) {
   const actualCautionPaid =
     file.caution.type === 'actual' && file.caution.currency === currency ? cautionDeposited[currency] ?? 0 : 0;
 
-  const profit =
-    file.sellingPrice.amount - (expenses[currency] ?? 0) - outstandingTransportCostSameCurrency + actualCautionPaid;
+  const actualExpenses = (expenses[currency] ?? 0) + actualCautionPaid;
+  const profit = file.sellingPrice.amount - actualExpenses - outstandingTransportCostSameCurrency + actualCautionPaid;
   const balanceDue = file.sellingPrice.amount - (collected[currency] ?? 0);
   const cashBalance = await computeFileCashBalance(fileId);
 
