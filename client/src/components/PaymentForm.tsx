@@ -26,15 +26,26 @@ export const DIRECTION_LABELS: Record<PaymentDirection, string> = {
 interface Props {
   /** When set, the payment is locked to this file and the file selector is hidden. */
   lockedFileId?: string;
+  /** Pre-selected when the category is switched to agent/transporter payment, since the file already has these assigned. Still editable. */
+  defaultAgentId?: string;
+  defaultTransporterId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
+export function PaymentForm({ lockedFileId, defaultAgentId, defaultTransporterId, onSuccess, onCancel }: Props) {
   const queryClient = useQueryClient();
   const { data: files } = useQuery({ queryKey: ['files-all'], queryFn: () => listFiles(), enabled: !lockedFileId });
-  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: () => agentsApi.list() });
-  const { data: transporters } = useQuery({ queryKey: ['transporters'], queryFn: () => transportersApi.list() });
+  // Within a file's page the file may already reference an agent/transporter that's since been
+  // deactivated, so include inactive ones here or the pre-fill below has nothing to select.
+  const { data: agents } = useQuery({
+    queryKey: ['agents', lockedFileId ? 'all' : 'active'],
+    queryFn: () => agentsApi.list(lockedFileId ? { includeInactive: 'true' } : undefined),
+  });
+  const { data: transporters } = useQuery({
+    queryKey: ['transporters', lockedFileId ? 'all' : 'active'],
+    queryFn: () => transportersApi.list(lockedFileId ? { includeInactive: 'true' } : undefined),
+  });
   const directionOptions = Object.entries(DIRECTION_LABELS).filter(
     ([value]) => !lockedFileId || value !== 'business_expense',
   );
@@ -58,6 +69,11 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
   useEffect(() => {
     setPaymentType('');
   }, [direction]);
+
+  useEffect(() => {
+    if (direction === 'agent_payment' && defaultAgentId) setAgent(defaultAgentId);
+    if (direction === 'transporter_payment' && defaultTransporterId) setTransporter(defaultTransporterId);
+  }, [direction, defaultAgentId, defaultTransporterId]);
 
   const createMutation = useMutation({
     mutationFn: createPayment,
@@ -154,6 +170,7 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
             {agents?.map((a) => (
               <option key={a._id} value={a._id}>
                 {a.name}
+                {!a.active ? ' (inactive)' : ''}
               </option>
             ))}
           </select>
@@ -172,6 +189,7 @@ export function PaymentForm({ lockedFileId, onSuccess, onCancel }: Props) {
             {transporters?.map((t) => (
               <option key={t._id} value={t._id}>
                 {t.name}
+                {!t.active ? ' (inactive)' : ''}
               </option>
             ))}
           </select>

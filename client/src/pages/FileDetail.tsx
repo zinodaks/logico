@@ -253,7 +253,13 @@ export default function FileDetail() {
           </div>
 
           {showPaymentForm && (
-            <PaymentForm lockedFileId={file._id} onSuccess={() => setShowPaymentForm(false)} onCancel={() => setShowPaymentForm(false)} />
+            <PaymentForm
+              lockedFileId={file._id}
+              defaultAgentId={file.agent._id}
+              defaultTransporterId={file.transporter._id}
+              onSuccess={() => setShowPaymentForm(false)}
+              onCancel={() => setShowPaymentForm(false)}
+            />
           )}
 
           <div className="bg-white rounded-lg shadow overflow-x-auto max-w-3xl">
