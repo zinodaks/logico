@@ -97,10 +97,13 @@ export function streamClientStatementPdf(res, { client, rows, totals }) {
     ],
     renderSubRows: (row, drawHeader) => {
       if (!row.payments?.length) return;
-      doc.font('Helvetica-Oblique').fontSize(8).fillColor('#555555');
       const subRowHeight = doc.currentLineHeight(true) + 2;
       for (const p of row.payments) {
+        // Re-set the style every line, not once before the loop: ensureSpace may trigger a
+        // page break, and drawHeader() resets font/size for its own header text, so a style
+        // set only once would be lost for any lines drawn after a break mid-list.
         ensureSpace(doc, subRowHeight, drawHeader);
+        doc.font('Helvetica-Oblique').fontSize(8).fillColor('#555555');
         const y = doc.y + 2;
         doc.text(formatDate(p.date), 70, y);
         doc.text(p.paymentType, 170, y);
