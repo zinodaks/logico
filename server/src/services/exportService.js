@@ -13,6 +13,50 @@ function currencyTotalsLine(totals) {
     .join(', ') || '0.00';
 }
 
+const TABLE_LEFT = 50;
+const TABLE_RIGHT = 545;
+const TABLE_BOTTOM_MARGIN = 50;
+
+/**
+ * Renders a table with explicit per-column x-positions, breaking to a new
+ * page (and repeating the header row) whenever the next row wouldn't fit
+ * above the bottom margin. Plain flowing doc.text() calls already paginate
+ * correctly on their own, but text drawn at an explicit y does not, so
+ * multi-column rows need this manual check or they silently run off the
+ * bottom of the page once a statement gets long.
+ */
+function drawTable(doc, { columns, rows, getCells }) {
+  function drawHeader() {
+    doc.font('Helvetica-Bold').fontSize(10);
+    const headerY = doc.y;
+    for (const col of columns) {
+      doc.text(col.label, col.x, headerY);
+    }
+    doc.font('Helvetica');
+    doc.moveDown();
+    doc.moveTo(TABLE_LEFT, doc.y).lineTo(TABLE_RIGHT, doc.y).stroke();
+    doc.moveDown(0.3);
+  }
+
+  drawHeader();
+  const rowHeight = doc.currentLineHeight(true) + 4;
+
+  for (const row of rows) {
+    if (doc.y + rowHeight > doc.page.height - TABLE_BOTTOM_MARGIN) {
+      doc.addPage();
+      drawHeader();
+    }
+    const y = doc.y + 4;
+    const cells = getCells(row);
+    columns.forEach((col, i) => doc.text(cells[i], col.x, y));
+    doc.moveDown();
+  }
+
+  doc.moveDown();
+  doc.moveTo(TABLE_LEFT, doc.y).lineTo(TABLE_RIGHT, doc.y).stroke();
+  doc.moveDown();
+}
+
 export function streamClientStatementPdf(res, { client, rows, totals }) {
   const doc = new PDFDocument({ margin: 50 });
   res.setHeader('Content-Type', 'application/pdf');
@@ -27,26 +71,22 @@ export function streamClientStatementPdf(res, { client, rows, totals }) {
   doc.moveDown();
 
   doc.fontSize(10);
-  const colX = [50, 170, 300, 400, 480];
-  doc.text('BL Number', colX[0], doc.y, { continued: false });
-  doc.text('Selling Price', colX[1], doc.y - 12);
-  doc.text('Collected', colX[2], doc.y - 12);
-  doc.text('Balance Due', colX[3], doc.y - 12);
-  doc.moveDown();
-  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+  drawTable(doc, {
+    columns: [
+      { label: 'BL Number', x: 50 },
+      { label: 'Selling Price', x: 170 },
+      { label: 'Collected', x: 300 },
+      { label: 'Balance Due', x: 400 },
+    ],
+    rows,
+    getCells: (row) => [
+      row.blNumber,
+      `${formatMoney(row.sellingPrice)} ${row.currency}`,
+      `${formatMoney(row.collected)} ${row.currency}`,
+      `${formatMoney(row.balanceDue)} ${row.currency}`,
+    ],
+  });
 
-  for (const row of rows) {
-    const y = doc.y + 4;
-    doc.text(row.blNumber, colX[0], y);
-    doc.text(`${formatMoney(row.sellingPrice)} ${row.currency}`, colX[1], y);
-    doc.text(`${formatMoney(row.collected)} ${row.currency}`, colX[2], y);
-    doc.text(`${formatMoney(row.balanceDue)} ${row.currency}`, colX[3], y);
-    doc.moveDown();
-  }
-
-  doc.moveDown();
-  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-  doc.moveDown();
   doc.fontSize(11).text(`Total selling price: ${currencyTotalsLine(totals.sellingPrice)}`);
   doc.text(`Total collected: ${currencyTotalsLine(totals.collected)}`);
   doc.text(`Total balance due: ${currencyTotalsLine(totals.balanceDue)}`);
@@ -94,26 +134,22 @@ export function streamFileStatementPdf(res, { file, currency, rows, totalDebit, 
   doc.moveDown();
 
   doc.fontSize(10);
-  const colX = [50, 220, 380, 470];
-  doc.text('Date', colX[0], doc.y);
-  doc.text('Description', colX[1], doc.y - 12);
-  doc.text('Debit', colX[2], doc.y - 12);
-  doc.text('Credit', colX[3], doc.y - 12);
-  doc.moveDown();
-  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+  drawTable(doc, {
+    columns: [
+      { label: 'Date', x: 50 },
+      { label: 'Description', x: 220 },
+      { label: 'Debit', x: 380 },
+      { label: 'Credit', x: 470 },
+    ],
+    rows,
+    getCells: (row) => [
+      formatDate(row.date),
+      row.description,
+      row.debit ? `${formatMoney(row.debit)} ${currency}` : '',
+      row.credit ? `${formatMoney(row.credit)} ${currency}` : '',
+    ],
+  });
 
-  for (const row of rows) {
-    const y = doc.y + 4;
-    doc.text(formatDate(row.date), colX[0], y);
-    doc.text(row.description, colX[1], y);
-    doc.text(row.debit ? `${formatMoney(row.debit)} ${currency}` : '', colX[2], y);
-    doc.text(row.credit ? `${formatMoney(row.credit)} ${currency}` : '', colX[3], y);
-    doc.moveDown();
-  }
-
-  doc.moveDown();
-  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-  doc.moveDown();
   doc.fontSize(11).text(`Total debit: ${formatMoney(totalDebit)} ${currency}`);
   doc.text(`Total credit: ${formatMoney(totalCredit)} ${currency}`);
   doc.text(`Balance due: ${formatMoney(balanceDue)} ${currency}`);
@@ -157,28 +193,24 @@ export function streamTransporterStatementPdf(res, { transporter, rows, totals }
   doc.moveDown();
 
   doc.fontSize(10);
-  const colX = [50, 190, 300, 380, 460];
-  doc.text('Client', colX[0], doc.y);
-  doc.text('BL Number', colX[1], doc.y - 12);
-  doc.text('Cost', colX[2], doc.y - 12);
-  doc.text('Paid', colX[3], doc.y - 12);
-  doc.text('Balance Owed', colX[4], doc.y - 12);
-  doc.moveDown();
-  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+  drawTable(doc, {
+    columns: [
+      { label: 'Client', x: 50 },
+      { label: 'BL Number', x: 190 },
+      { label: 'Cost', x: 300 },
+      { label: 'Paid', x: 380 },
+      { label: 'Balance Owed', x: 460 },
+    ],
+    rows,
+    getCells: (row) => [
+      row.client,
+      row.blNumber,
+      `${formatMoney(row.cost)} ${row.currency}`,
+      `${formatMoney(row.paid)} ${row.currency}`,
+      `${formatMoney(row.balanceOwed)} ${row.currency}`,
+    ],
+  });
 
-  for (const row of rows) {
-    const y = doc.y + 4;
-    doc.text(row.client, colX[0], y);
-    doc.text(row.blNumber, colX[1], y);
-    doc.text(`${formatMoney(row.cost)} ${row.currency}`, colX[2], y);
-    doc.text(`${formatMoney(row.paid)} ${row.currency}`, colX[3], y);
-    doc.text(`${formatMoney(row.balanceOwed)} ${row.currency}`, colX[4], y);
-    doc.moveDown();
-  }
-
-  doc.moveDown();
-  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-  doc.moveDown();
   doc.fontSize(11).text(`Total cost: ${currencyTotalsLine(totals.cost)}`);
   doc.text(`Total paid: ${currencyTotalsLine(totals.paid)}`);
   doc.text(`Total balance owed: ${currencyTotalsLine(totals.balanceOwed)}`);
