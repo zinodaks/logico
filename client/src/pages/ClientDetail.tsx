@@ -197,21 +197,42 @@ export default function ClientDetail() {
       {tab === 'files' && <ClientFilesTab clientId={client._id} />}
 
       {tab === 'statement' && (
-        <div className="bg-white rounded-lg shadow p-6 max-w-md">
-          <p className="text-gray-500 mb-4">Export a statement of this client's files, charges, and balances due.</p>
-          <div className="flex gap-3">
-            <a
-              href={clientStatementUrl(client._id, 'pdf')}
-              className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
-            >
-              Download PDF
-            </a>
-            <a
-              href={clientStatementUrl(client._id, 'xlsx')}
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-            >
-              Download Excel
-            </a>
+        <div className="bg-white rounded-lg shadow p-6 max-w-md space-y-6">
+          <div>
+            <p className="text-gray-500 mb-4">Export a statement of this client's files, charges, and balances due.</p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={clientStatementUrl(client._id, 'pdf')}
+                className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
+              >
+                Download PDF
+              </a>
+              <a
+                href={clientStatementUrl(client._id, 'xlsx')}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+              >
+                Download Excel
+              </a>
+            </div>
+          </div>
+          <div>
+            <p className="text-gray-500 mb-4">
+              Detailed statement — same as above, plus each client payment (date, amount, type) listed under its file.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={clientStatementUrl(client._id, 'pdf', true)}
+                className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
+              >
+                Download Detailed PDF
+              </a>
+              <a
+                href={clientStatementUrl(client._id, 'xlsx', true)}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+              >
+                Download Detailed Excel
+              </a>
+            </div>
           </div>
         </div>
       )}

@@ -17,6 +17,14 @@ const TABLE_LEFT = 50;
 const TABLE_RIGHT = 545;
 const TABLE_BOTTOM_MARGIN = 50;
 
+/** Adds a new page (invoking onBreak, typically to redraw a header) if the next chunk of the given height wouldn't fit above the bottom margin. */
+function ensureSpace(doc, neededHeight, onBreak) {
+  if (doc.y + neededHeight > doc.page.height - TABLE_BOTTOM_MARGIN) {
+    doc.addPage();
+    onBreak?.();
+  }
+}
+
 /**
  * Renders a table with explicit per-column x-positions, breaking to a new
  * page (and repeating the header row) whenever the next row wouldn't fit
@@ -24,8 +32,12 @@ const TABLE_BOTTOM_MARGIN = 50;
  * correctly on their own, but text drawn at an explicit y does not, so
  * multi-column rows need this manual check or they silently run off the
  * bottom of the page once a statement gets long.
+ *
+ * `renderSubRows(row, drawHeader)`, if given, runs after each row is drawn
+ * (e.g. an indented payments sub-section) and can call `ensureSpace`/
+ * `drawHeader` itself to paginate safely within that row's extra content.
  */
-function drawTable(doc, { columns, rows, getCells }) {
+function drawTable(doc, { columns, rows, getCells, renderSubRows }) {
   function drawHeader() {
     doc.font('Helvetica-Bold').fontSize(10);
     const headerY = doc.y;
@@ -42,14 +54,12 @@ function drawTable(doc, { columns, rows, getCells }) {
   const rowHeight = doc.currentLineHeight(true) + 4;
 
   for (const row of rows) {
-    if (doc.y + rowHeight > doc.page.height - TABLE_BOTTOM_MARGIN) {
-      doc.addPage();
-      drawHeader();
-    }
+    ensureSpace(doc, rowHeight, drawHeader);
     const y = doc.y + 4;
     const cells = getCells(row);
     columns.forEach((col, i) => doc.text(cells[i], col.x, y));
     doc.moveDown();
+    renderSubRows?.(row, drawHeader);
   }
 
   doc.moveDown();
@@ -85,6 +95,21 @@ export function streamClientStatementPdf(res, { client, rows, totals }) {
       `${formatMoney(row.collected)} ${row.currency}`,
       `${formatMoney(row.balanceDue)} ${row.currency}`,
     ],
+    renderSubRows: (row, drawHeader) => {
+      if (!row.payments?.length) return;
+      doc.font('Helvetica-Oblique').fontSize(8).fillColor('#555555');
+      const subRowHeight = doc.currentLineHeight(true) + 2;
+      for (const p of row.payments) {
+        ensureSpace(doc, subRowHeight, drawHeader);
+        const y = doc.y + 2;
+        doc.text(formatDate(p.date), 70, y);
+        doc.text(p.paymentType, 170, y);
+        doc.text(`${formatMoney(p.amount)} ${p.currency}`, 320, y);
+        doc.moveDown(0.8);
+      }
+      doc.font('Helvetica').fontSize(10).fillColor('black');
+      doc.moveDown(0.3);
+    },
   });
 
   doc.fontSize(11).text(`Total selling price: ${currencyTotalsLine(totals.sellingPrice)}`);
@@ -105,6 +130,12 @@ export async function streamClientStatementXlsx(res, { client, rows, totals }) {
 
   for (const row of rows) {
     sheet.addRow([row.blNumber, row.status, row.sellingPrice, row.collected, row.balanceDue, row.currency]);
+    if (row.payments?.length) {
+      for (const p of row.payments) {
+        const paymentRow = sheet.addRow(['', `  ${formatDate(p.date)} — ${p.paymentType}`, '', p.amount, '', p.currency]);
+        paymentRow.font = { italic: true, color: { argb: 'FF666666' } };
+      }
+    }
   }
 
   sheet.addRow([]);

@@ -114,7 +114,8 @@ export async function downloadAllDocuments(req, res) {
 }
 
 export async function getClientStatement(req, res) {
-  const data = await buildClientStatementData(req.params.id);
+  const detailed = req.query.detailed === 'true';
+  const data = await buildClientStatementData(req.params.id, { detailed });
   if (!data) throw new ApiError(404, 'Client not found');
 
   if (req.query.format === 'xlsx') {

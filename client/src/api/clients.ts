@@ -64,6 +64,6 @@ export function clientDocumentsZipUrl(id: string): string {
   return `/api/clients/${id}/documents/zip`;
 }
 
-export function clientStatementUrl(id: string, format: 'pdf' | 'xlsx'): string {
-  return `/api/clients/${id}/statement?format=${format}`;
+export function clientStatementUrl(id: string, format: 'pdf' | 'xlsx', detailed = false): string {
+  return `/api/clients/${id}/statement?format=${format}${detailed ? '&detailed=true' : ''}`;
 }

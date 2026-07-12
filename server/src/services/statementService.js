@@ -9,7 +9,12 @@ function addToTotals(totals, currency, amount) {
   totals[currency] = (totals[currency] ?? 0) + amount;
 }
 
-export async function buildClientStatementData(clientId) {
+/**
+ * @param {string} clientId
+ * @param {{ detailed?: boolean }} [options] - when detailed, each row also carries its file's
+ *   individual client_payment history (date, amount, type) for a payments sub-section.
+ */
+export async function buildClientStatementData(clientId, { detailed = false } = {}) {
   const client = await Client.findById(clientId);
   if (!client) return null;
 
@@ -20,14 +25,28 @@ export async function buildClientStatementData(clientId) {
 
   for (const file of files) {
     const profitability = await computeFileProfitability(file._id);
-    rows.push({
+    const row = {
       blNumber: file.blNumber,
       status: file.status,
       currency: profitability.currency,
       sellingPrice: profitability.sellingPrice,
       collected: profitability.collected[profitability.currency] ?? 0,
       balanceDue: profitability.balanceDue,
-    });
+    };
+
+    if (detailed) {
+      const payments = await Payment.find({ file: file._id, direction: 'client_payment' })
+        .populate('paymentType', 'name')
+        .sort({ date: 1 });
+      row.payments = payments.map((p) => ({
+        date: p.date,
+        amount: p.amount,
+        currency: p.currency,
+        paymentType: p.paymentType?.name ?? 'Payment',
+      }));
+    }
+
+    rows.push(row);
     addToTotals(totals.sellingPrice, profitability.currency, profitability.sellingPrice);
     addToTotals(totals.collected, profitability.currency, profitability.collected[profitability.currency] ?? 0);
     addToTotals(totals.balanceDue, profitability.currency, profitability.balanceDue);
