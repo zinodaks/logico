@@ -1,4 +1,9 @@
-import { computeCashBalance, computeFileProfitability, computeClientProfitability } from '../services/financeService.js';
+import {
+  computeCashBalance,
+  computeFileProfitability,
+  computeClientProfitability,
+  computeClosedFilesProfitability,
+} from '../services/financeService.js';
 import { ShipmentFile } from '../models/ShipmentFile.js';
 import { Payment } from '../models/Payment.js';
 import { ApiError } from '../middleware/errorHandler.js';
@@ -17,6 +22,11 @@ export async function getFileProfitability(req, res) {
 export async function getClientProfitability(req, res) {
   const profitability = await computeClientProfitability(req.params.id);
   res.json({ item: profitability });
+}
+
+export async function getClosedFilesProfitability(req, res) {
+  const data = await computeClosedFilesProfitability();
+  res.json(data);
 }
 
 export async function getActualCautionsReport(req, res) {

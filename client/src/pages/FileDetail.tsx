@@ -89,9 +89,29 @@ export default function FileDetail() {
           </button>
         </div>
       </div>
-      <p className="text-gray-500 mb-6">
+      <p className="text-gray-500 mb-2">
         {file.client.name} · {file.processType}
       </p>
+
+      {file.status === 'closed' && profitability && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {profitability.balanceDue > 0 && (
+            <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+              Pending balance payment
+            </span>
+          )}
+          {profitability.outstandingTransportCost > 0 && (
+            <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+              Pending transporter payment
+            </span>
+          )}
+          {profitability.caution.type === 'actual' && profitability.caution.outstandingToCollect > 0 && (
+            <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+              Pending caution refund
+            </span>
+          )}
+        </div>
+      )}
 
       {profitability && (
         <div className="flex flex-wrap gap-4 mb-6">

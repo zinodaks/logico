@@ -196,3 +196,40 @@ export async function computeClientProfitability(clientId) {
 
   return { realized, projected, fileCount: files.length };
 }
+
+/**
+ * Per-file profit for every closed file, plus a per-currency cumulative
+ * total. Each row also carries three automatically-derived pending flags
+ * (balance still owed by the client, transport cost still owed to the
+ * transporter, actual-caution deposit not yet refunded) so a file marked
+ * closed but with loose ends still shows what's outstanding — these are
+ * computed from the same figures as computeFileProfitability, not a
+ * separate stored status, so they can never drift out of sync with the
+ * underlying payments.
+ */
+export async function computeClosedFilesProfitability() {
+  const files = await ShipmentFile.find({ status: 'closed' }).populate('client', 'name').sort({ createdAt: 1 });
+
+  const rows = [];
+  const cumulative = { USD: 0, CDF: 0 };
+
+  for (const file of files) {
+    const profitability = await computeFileProfitability(file._id);
+    if (!profitability) continue;
+
+    rows.push({
+      fileId: file._id,
+      blNumber: file.blNumber,
+      client: file.client.name,
+      currency: profitability.currency,
+      profit: profitability.profit,
+      pendingBalancePayment: profitability.balanceDue > 0,
+      pendingTransporterPayment: profitability.outstandingTransportCost > 0,
+      pendingCautionRefund:
+        profitability.caution.type === 'actual' && profitability.caution.outstandingToCollect > 0,
+    });
+    cumulative[profitability.currency] += profitability.profit;
+  }
+
+  return { rows, cumulative };
+}

@@ -1,13 +1,20 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { getCashBalance, getActualCautionsReport } from '../api/finance';
+import { getCashBalance, getActualCautionsReport, getClosedFilesProfitability } from '../api/finance';
 import { listFiles } from '../api/files';
+
+function maskedAmount(value: number, currency: string, show: boolean) {
+  return show ? `${value.toFixed(2)} ${currency}` : `**** ${currency}`;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [showProfits, setShowProfits] = useState(false);
   const { data: balance } = useQuery({ queryKey: ['finance-balance'], queryFn: getCashBalance });
   const { data: openFiles } = useQuery({ queryKey: ['files', { status: 'open' }], queryFn: () => listFiles({ status: 'open' }) });
   const { data: cautions } = useQuery({ queryKey: ['cautions-actual'], queryFn: getActualCautionsReport });
+  const { data: closedProfits } = useQuery({ queryKey: ['closed-files-profitability'], queryFn: getClosedFilesProfitability });
 
   const outstandingCautions = cautions?.filter((c) => c.paid && !c.refunded) ?? [];
 
@@ -32,11 +39,78 @@ export default function Dashboard() {
       </div>
 
       {outstandingCautions.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded px-4 py-3">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded px-4 py-3 mb-8">
           <p className="font-medium mb-1">{outstandingCautions.length} outstanding actual caution deposit(s)</p>
           <p className="text-sm">Cash currently locked at shipping lines, pending refund on container return.</p>
         </div>
       )}
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">Profits — Closed Files</h2>
+          <button
+            onClick={() => setShowProfits((v) => !v)}
+            className="bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-300"
+          >
+            {showProfits ? 'Hide numbers' : 'Show numbers'}
+          </button>
+        </div>
+
+        {!closedProfits || closedProfits.rows.length === 0 ? (
+          <p className="text-gray-400 text-sm">No closed files yet.</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
+                <thead className="bg-gray-100 text-left text-gray-600">
+                  <tr>
+                    <th className="px-4 py-2">BL Number</th>
+                    <th className="px-4 py-2">Client</th>
+                    <th className="px-4 py-2">Pending</th>
+                    <th className="px-4 py-2 text-right">Profit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {closedProfits.rows.map((row) => (
+                    <tr key={row.fileId} className="border-t border-gray-100">
+                      <td className="px-4 py-2">{row.blNumber}</td>
+                      <td className="px-4 py-2">{row.client}</td>
+                      <td className="px-4 py-2 space-x-1">
+                        {row.pendingBalancePayment && (
+                          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+                            Balance payment
+                          </span>
+                        )}
+                        {row.pendingTransporterPayment && (
+                          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+                            Transporter payment
+                          </span>
+                        )}
+                        {row.pendingCautionRefund && (
+                          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+                            Caution refund
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        {maskedAmount(row.profit, row.currency, showProfits)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200 font-medium">
+              <span>Cumulative profit</span>
+              <span>
+                {maskedAmount(closedProfits.cumulative.USD, 'USD', showProfits)}
+                {' / '}
+                {maskedAmount(closedProfits.cumulative.CDF, 'CDF', showProfits)}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

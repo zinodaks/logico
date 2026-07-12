@@ -59,3 +59,24 @@ export async function getActualCautionsReport(): Promise<ActualCautionReportItem
   const { data } = await api.get<{ items: ActualCautionReportItem[] }>('/finance/cautions/actual-paid');
   return data.items;
 }
+
+export interface ClosedFileProfitRow {
+  fileId: string;
+  blNumber: string;
+  client: string;
+  currency: 'USD' | 'CDF';
+  profit: number;
+  pendingBalancePayment: boolean;
+  pendingTransporterPayment: boolean;
+  pendingCautionRefund: boolean;
+}
+
+export interface ClosedFilesProfitability {
+  rows: ClosedFileProfitRow[];
+  cumulative: CurrencyTotals;
+}
+
+export async function getClosedFilesProfitability(): Promise<ClosedFilesProfitability> {
+  const { data } = await api.get<ClosedFilesProfitability>('/finance/closed-files-profitability');
+  return data;
+}
