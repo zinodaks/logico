@@ -14,7 +14,12 @@ export default function Dashboard() {
   const { data: balance } = useQuery({ queryKey: ['finance-balance'], queryFn: getCashBalance });
   const { data: openFiles } = useQuery({ queryKey: ['files', { status: 'open' }], queryFn: () => listFiles({ status: 'open' }) });
   const { data: cautions } = useQuery({ queryKey: ['cautions-actual'], queryFn: getActualCautionsReport });
-  const { data: closedProfits } = useQuery({ queryKey: ['closed-files-profitability'], queryFn: getClosedFilesProfitability });
+  const {
+    data: closedProfits,
+    isLoading: profitsLoading,
+    isError: profitsErrored,
+    error: profitsError,
+  } = useQuery({ queryKey: ['closed-files-profitability'], queryFn: getClosedFilesProfitability });
 
   const outstandingCautions = cautions?.filter((c) => c.paid && !c.refunded) ?? [];
 
@@ -56,7 +61,15 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {!closedProfits || closedProfits.rows.length === 0 ? (
+        {profitsLoading ? (
+          <p className="text-gray-400 text-sm">Loading…</p>
+        ) : profitsErrored ? (
+          <p className="text-sm text-red-600">
+            Could not load profits:{' '}
+            {(profitsError as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+              'Unknown error'}
+          </p>
+        ) : !closedProfits || closedProfits.rows.length === 0 ? (
           <p className="text-gray-400 text-sm">No closed files yet.</p>
         ) : (
           <>
