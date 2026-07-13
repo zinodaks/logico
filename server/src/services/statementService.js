@@ -18,7 +18,23 @@ export async function buildClientStatementData(clientId, { detailed = false } = 
   const client = await Client.findById(clientId);
   if (!client) return null;
 
-  const files = await ShipmentFile.find({ client: clientId }).sort({ createdAt: 1 });
+  const files = await ShipmentFile.find({ client: clientId });
+
+  const firstEntryRows = await Payment.aggregate([
+    { $match: { file: { $in: files.map((f) => f._id) }, direction: 'client_payment' } },
+    { $group: { _id: '$file', firstEntryDate: { $min: '$date' } } },
+  ]);
+  const firstEntryByFile = new Map(firstEntryRows.map((r) => [r._id.toString(), r.firstEntryDate]));
+
+  // Most recent first-entry date first, oldest last; files with no client payments yet sort to the top.
+  files.sort((a, b) => {
+    const dateA = firstEntryByFile.get(a._id.toString());
+    const dateB = firstEntryByFile.get(b._id.toString());
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return -1;
+    if (!dateB) return 1;
+    return dateB - dateA;
+  });
 
   const rows = [];
   const totals = { sellingPrice: {}, collected: {}, balanceDue: {} };
