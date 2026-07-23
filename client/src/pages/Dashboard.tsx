@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { getCashBalance, getActualCautionsReport, getClosedFilesProfitability } from '../api/finance';
+import {
+  getCashBalance,
+  getActualCautionsReport,
+  getClosedFilesProfitability,
+  getOpenFilesCashSummary,
+  getOpenFilesAwaitingPayment,
+} from '../api/finance';
 import { listFiles } from '../api/files';
 
 function maskedAmount(value: number, currency: string, show: boolean) {
@@ -20,6 +26,14 @@ export default function Dashboard() {
     isError: profitsErrored,
     error: profitsError,
   } = useQuery({ queryKey: ['closed-files-profitability'], queryFn: getClosedFilesProfitability });
+  const { data: cashSummary } = useQuery({
+    queryKey: ['open-files-cash-summary'],
+    queryFn: getOpenFilesCashSummary,
+  });
+  const { data: awaitingPayment } = useQuery({
+    queryKey: ['open-files-awaiting-payment'],
+    queryFn: getOpenFilesAwaitingPayment,
+  });
 
   const outstandingCautions = cautions?.filter((c) => c.paid && !c.refunded) ?? [];
 
@@ -49,6 +63,85 @@ export default function Dashboard() {
           <p className="text-sm">Cash currently locked at shipping lines, pending refund on container return.</p>
         </div>
       )}
+
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+          Open Files Awaiting Client Payment
+          {awaitingPayment && awaitingPayment.length > 0 && (
+            <span className="ml-2 inline-block bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded align-middle">
+              {awaitingPayment.length}
+            </span>
+          )}
+        </h2>
+        {!awaitingPayment ? (
+          <p className="text-gray-400 text-sm">Loading…</p>
+        ) : awaitingPayment.length === 0 ? (
+          <p className="text-gray-400 text-sm">Every open file has at least one client payment.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[480px]">
+              <thead className="bg-gray-100 text-left text-gray-600">
+                <tr>
+                  <th className="px-4 py-2">BL Number</th>
+                  <th className="px-4 py-2">Client</th>
+                  <th className="px-4 py-2 text-right">Selling price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {awaitingPayment.map((row) => (
+                  <tr key={row.fileId} className="border-t border-gray-100">
+                    <td className="px-4 py-2">{row.blNumber}</td>
+                    <td className="px-4 py-2">{row.client}</td>
+                    <td className="px-4 py-2 text-right">
+                      {row.sellingPrice.toFixed(2)} {row.currency}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Open File Cash Balances</h2>
+        {!cashSummary ? (
+          <p className="text-gray-400 text-sm">Loading…</p>
+        ) : cashSummary.rows.length === 0 ? (
+          <p className="text-gray-400 text-sm">No open files.</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
+                <thead className="bg-gray-100 text-left text-gray-600">
+                  <tr>
+                    <th className="px-4 py-2">BL Number</th>
+                    <th className="px-4 py-2">Client</th>
+                    <th className="px-4 py-2 text-right">USD</th>
+                    <th className="px-4 py-2 text-right">CDF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cashSummary.rows.map((row) => (
+                    <tr key={row.fileId} className="border-t border-gray-100">
+                      <td className="px-4 py-2">{row.blNumber}</td>
+                      <td className="px-4 py-2">{row.client}</td>
+                      <td className="px-4 py-2 text-right">{row.cashBalance.USD.toFixed(2)}</td>
+                      <td className="px-4 py-2 text-right">{row.cashBalance.CDF.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200 font-medium">
+              <span>Total cash held across open files</span>
+              <span>
+                {cashSummary.totals.USD.toFixed(2)} USD / {cashSummary.totals.CDF.toFixed(2)} CDF
+              </span>
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex flex-wrap justify-between items-center gap-2 mb-4">

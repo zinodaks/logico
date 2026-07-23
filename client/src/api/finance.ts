@@ -80,3 +80,33 @@ export async function getClosedFilesProfitability(): Promise<ClosedFilesProfitab
   const { data } = await api.get<ClosedFilesProfitability>('/finance/closed-files-profitability');
   return data;
 }
+
+export interface OpenFileCashRow {
+  fileId: string;
+  blNumber: string;
+  client: string;
+  cashBalance: CurrencyTotals;
+}
+
+export interface OpenFilesCashSummary {
+  rows: OpenFileCashRow[];
+  totals: CurrencyTotals;
+}
+
+export async function getOpenFilesCashSummary(): Promise<OpenFilesCashSummary> {
+  const { data } = await api.get<OpenFilesCashSummary>('/finance/open-files-cash-summary');
+  return data;
+}
+
+export interface OpenFileAwaitingPaymentRow {
+  fileId: string;
+  blNumber: string;
+  client: string;
+  sellingPrice: number;
+  currency: 'USD' | 'CDF';
+}
+
+export async function getOpenFilesAwaitingPayment(): Promise<OpenFileAwaitingPaymentRow[]> {
+  const { data } = await api.get<{ rows: OpenFileAwaitingPaymentRow[] }>('/finance/open-files-awaiting-payment');
+  return data.rows;
+}

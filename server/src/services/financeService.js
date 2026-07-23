@@ -174,6 +174,62 @@ export async function computeFileProfitability(fileId) {
 }
 
 /**
+ * Per-file cash balance for every open file, plus a per-currency total.
+ * Each row is the real cash-in-hand attributable to that file (see
+ * computeFileCashBalance): positive means we're holding money collected
+ * but not yet spent, negative means we've fronted more than we've
+ * collected. Scoped to open files — closed files are expected to have
+ * settled, and are covered by the closed-files profitability report.
+ */
+export async function computeOpenFilesCashSummary() {
+  const files = await ShipmentFile.find({ status: 'open' }).populate('client', 'name').sort({ createdAt: 1 });
+
+  const rows = [];
+  const totals = { USD: 0, CDF: 0 };
+
+  for (const file of files) {
+    const cashBalance = await computeFileCashBalance(file._id);
+    rows.push({
+      fileId: file._id,
+      blNumber: file.blNumber,
+      client: file.client?.name ?? '',
+      cashBalance,
+    });
+    totals.USD += cashBalance.USD;
+    totals.CDF += cashBalance.CDF;
+  }
+
+  return { rows, totals };
+}
+
+/**
+ * Open files the client has not paid anything toward yet: every open file
+ * with no client_payment recorded against it. The selling price is carried
+ * along as the amount still to be collected in full.
+ */
+export async function computeOpenFilesAwaitingClientPayment() {
+  const files = await ShipmentFile.find({ status: 'open' }).populate('client', 'name').sort({ createdAt: 1 });
+
+  const paidRows = await Payment.aggregate([
+    { $match: { file: { $in: files.map((f) => f._id) }, direction: 'client_payment' } },
+    { $group: { _id: '$file' } },
+  ]);
+  const paidFileIds = new Set(paidRows.map((r) => r._id.toString()));
+
+  const rows = files
+    .filter((file) => !paidFileIds.has(file._id.toString()))
+    .map((file) => ({
+      fileId: file._id,
+      blNumber: file.blNumber,
+      client: file.client?.name ?? '',
+      sellingPrice: file.sellingPrice.amount,
+      currency: file.sellingPrice.currency,
+    }));
+
+  return { rows };
+}
+
+/**
  * Aggregates profitability across a client's files: realized profit comes
  * only from closed files; projected profit covers all files regardless of
  * status. Reported per currency, never converted/blended.

@@ -3,6 +3,8 @@ import {
   computeFileProfitability,
   computeClientProfitability,
   computeClosedFilesProfitability,
+  computeOpenFilesCashSummary,
+  computeOpenFilesAwaitingClientPayment,
 } from '../services/financeService.js';
 import { ShipmentFile } from '../models/ShipmentFile.js';
 import { Payment } from '../models/Payment.js';
@@ -26,6 +28,16 @@ export async function getClientProfitability(req, res) {
 
 export async function getClosedFilesProfitability(req, res) {
   const data = await computeClosedFilesProfitability();
+  res.json(data);
+}
+
+export async function getOpenFilesCashSummary(req, res) {
+  const data = await computeOpenFilesCashSummary();
+  res.json(data);
+}
+
+export async function getOpenFilesAwaitingClientPayment(req, res) {
+  const data = await computeOpenFilesAwaitingClientPayment();
   res.json(data);
 }
 
