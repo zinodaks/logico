@@ -31,7 +31,25 @@ export async function listFiles(req, res) {
     .populate('client', 'name')
     .populate('agent', 'name')
     .populate('transporter', 'name')
-    .sort({ createdAt: -1 });
+    .lean();
+
+  const firstEntryRows = await Payment.aggregate([
+    { $match: { file: { $in: files.map((f) => f._id) }, direction: 'client_payment' } },
+    { $group: { _id: '$file', firstEntryDate: { $min: '$date' } } },
+  ]);
+  const firstEntryByFile = new Map(firstEntryRows.map((r) => [r._id.toString(), r.firstEntryDate]));
+
+  // Order by the date of each file's first client payment (its "first entry"):
+  // most recent first-entry first, oldest last; files with no client payments yet sort to the top.
+  files.sort((a, b) => {
+    const dateA = firstEntryByFile.get(a._id.toString());
+    const dateB = firstEntryByFile.get(b._id.toString());
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return -1;
+    if (!dateB) return 1;
+    return dateB - dateA;
+  });
+
   res.json({ items: files });
 }
 
