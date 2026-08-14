@@ -266,12 +266,12 @@ export async function computeClientProfitability(clientId) {
 export async function computeClosedFilesProfitability() {
   const files = await ShipmentFile.find({ status: 'closed' }).populate('client', 'name').sort({ createdAt: 1 });
 
-  // Date of each file's most recent payment entry, excluding caution
-  // refunds (those can trickle in long after the deal itself wrapped up,
-  // so they'd misattribute the profit to a later month); used to bucket a
-  // closed file's realized profit into the month it wrapped up.
+  // Date of each file's most recent debit (money-out) entry — the last
+  // actual payment made, excluding all receipts (client payments, caution
+  // refunds), since those inflows aren't what marks the deal as wrapped up.
+  // Used to bucket a closed file's realized profit into that month.
   const lastPaymentRows = await Payment.aggregate([
-    { $match: { file: { $in: files.map((f) => f._id) }, direction: { $ne: 'caution_refund' } } },
+    { $match: { file: { $in: files.map((f) => f._id) }, direction: { $in: OUTFLOW_DIRECTIONS } } },
     { $group: { _id: '$file', lastPaymentDate: { $max: '$date' } } },
   ]);
   const lastPaymentByFile = new Map(
