@@ -17,6 +17,7 @@ import { paymentsRouter } from './routes/payments.js';
 import { financeRouter } from './routes/finance.js';
 import { profitTransfersRouter } from './routes/profitTransfers.js';
 
+// Initialize project 
 export function createApp() {
   const app = express();
 
