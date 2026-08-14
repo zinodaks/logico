@@ -66,6 +66,7 @@ export interface ClosedFileProfitRow {
   client: string;
   currency: 'USD' | 'CDF';
   profit: number;
+  lastPaymentDate: string | null;
   pendingBalancePayment: boolean;
   pendingTransporterPayment: boolean;
   pendingCautionRefund: boolean;

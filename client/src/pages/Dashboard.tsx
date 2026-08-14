@@ -7,11 +7,68 @@ import {
   getClosedFilesProfitability,
   getOpenFilesCashSummary,
   getOpenFilesAwaitingPayment,
+  type ClosedFileProfitRow,
+  type CurrencyTotals,
 } from '../api/finance';
 import { listFiles } from '../api/files';
 
 function maskedAmount(value: number, currency: string, show: boolean) {
   return show ? `${value.toFixed(2)} ${currency}` : `**** ${currency}`;
+}
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+interface MonthGroup {
+  key: string;
+  label: string;
+  sortKey: number;
+  rows: ClosedFileProfitRow[];
+  subtotal: CurrencyTotals;
+}
+
+// Bucket closed files by the calendar month of their last payment entry,
+// ordered January→December (oldest year first); files with no recorded
+// payment sort to the end.
+function groupClosedFilesByMonth(rows: ClosedFileProfitRow[]): MonthGroup[] {
+  const map = new Map<string, MonthGroup>();
+  for (const row of rows) {
+    let key: string;
+    let label: string;
+    let sortKey: number;
+    if (row.lastPaymentDate) {
+      const date = new Date(row.lastPaymentDate);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      key = `${year}-${month}`;
+      label = `${MONTH_NAMES[month]} ${year}`;
+      sortKey = year * 12 + month;
+    } else {
+      key = 'undated';
+      label = 'No payments recorded';
+      sortKey = Number.POSITIVE_INFINITY;
+    }
+    let group = map.get(key);
+    if (!group) {
+      group = { key, label, sortKey, rows: [], subtotal: { USD: 0, CDF: 0 } };
+      map.set(key, group);
+    }
+    group.rows.push(row);
+    group.subtotal[row.currency] += row.profit;
+  }
+  return [...map.values()].sort((a, b) => a.sortKey - b.sortKey);
 }
 
 export default function Dashboard() {
@@ -166,47 +223,62 @@ export default function Dashboard() {
           <p className="text-gray-400 text-sm">No closed files yet.</p>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[560px]">
-                <thead className="bg-gray-100 text-left text-gray-600">
-                  <tr>
-                    <th className="px-4 py-2">BL Number</th>
-                    <th className="px-4 py-2">Client</th>
-                    <th className="px-4 py-2">Pending</th>
-                    <th className="px-4 py-2 text-right">Profit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {closedProfits.rows.map((row) => (
-                    <tr key={row.fileId} className="border-t border-gray-100">
-                      <td className="px-4 py-2">{row.blNumber}</td>
-                      <td className="px-4 py-2">{row.client}</td>
-                      <td className="px-4 py-2 space-x-1">
-                        {row.pendingBalancePayment && (
-                          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
-                            Balance payment
-                          </span>
-                        )}
-                        {row.pendingTransporterPayment && (
-                          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
-                            Transporter payment
-                          </span>
-                        )}
-                        {row.pendingCautionRefund && (
-                          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
-                            Caution refund
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        {maskedAmount(row.profit, row.currency, showProfits)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-8">
+              {groupClosedFilesByMonth(closedProfits.rows).map((group) => (
+                <div key={group.key}>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">{group.label}</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[560px]">
+                      <thead className="bg-gray-100 text-left text-gray-600">
+                        <tr>
+                          <th className="px-4 py-2">BL Number</th>
+                          <th className="px-4 py-2">Client</th>
+                          <th className="px-4 py-2">Pending</th>
+                          <th className="px-4 py-2 text-right">Profit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.rows.map((row) => (
+                          <tr key={row.fileId} className="border-t border-gray-100">
+                            <td className="px-4 py-2">{row.blNumber}</td>
+                            <td className="px-4 py-2">{row.client}</td>
+                            <td className="px-4 py-2 space-x-1">
+                              {row.pendingBalancePayment && (
+                                <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+                                  Balance payment
+                                </span>
+                              )}
+                              {row.pendingTransporterPayment && (
+                                <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+                                  Transporter payment
+                                </span>
+                              )}
+                              {row.pendingCautionRefund && (
+                                <span className="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+                                  Caution refund
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2 text-right">
+                              {maskedAmount(row.profit, row.currency, showProfits)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100 text-sm text-gray-600">
+                    <span>{group.label} subtotal</span>
+                    <span>
+                      {maskedAmount(group.subtotal.USD, 'USD', showProfits)}
+                      {' / '}
+                      {maskedAmount(group.subtotal.CDF, 'CDF', showProfits)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200 font-medium">
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 font-medium">
               <span>Cumulative profit</span>
               <span>
                 {maskedAmount(closedProfits.cumulative.USD, 'USD', showProfits)}
