@@ -22,6 +22,97 @@ function toCurrencyTotals(rows) {
 }
 
 /**
+ * The single source of truth for a file's profitability figures, given its
+ * payment totals already broken down by currency. Both the single-file path
+ * (computeFileProfitability, which fetches the totals one file at a time) and
+ * the batched reports (closed-files profitability, which fetch every file's
+ * totals in one aggregation) call this, so their numbers can never diverge.
+ */
+function assembleFileProfitability(file, { expenses, collected, transportPaid, cautionDeposited, cautionRefunded, cashBalance }) {
+  const currency = file.sellingPrice.currency;
+  const outstandingTransportCost = file.transportCost.amount - (transportPaid[file.transportCost.currency] ?? 0);
+  const outstandingTransportCostSameCurrency = file.transportCost.currency === currency ? outstandingTransportCost : 0;
+  const actualCautionPaid =
+    file.caution.type === 'actual' && file.caution.currency === currency ? cautionDeposited[currency] ?? 0 : 0;
+
+  const actualExpenses = (expenses[currency] ?? 0) + actualCautionPaid;
+  const profit = file.sellingPrice.amount - actualExpenses - outstandingTransportCostSameCurrency + actualCautionPaid;
+  const balanceDue = file.sellingPrice.amount - (collected[currency] ?? 0);
+
+  const cautionOutstandingToCollect =
+    file.caution.type === 'actual'
+      ? (cautionDeposited[file.caution.currency] ?? 0) - (cautionRefunded[file.caution.currency] ?? 0)
+      : 0;
+
+  return {
+    currency,
+    sellingPrice: file.sellingPrice.amount,
+    expenses,
+    profit,
+    realized: file.status === 'closed',
+    collected,
+    balanceDue,
+    transportCost: file.transportCost,
+    outstandingTransportCost,
+    cashBalance,
+    caution: {
+      type: file.caution.type,
+      amount: file.caution.amount,
+      currency: file.caution.currency,
+      deposited: cautionDeposited[file.caution.currency] ?? 0,
+      refunded: cautionRefunded[file.caution.currency] ?? 0,
+      outstandingToCollect: cautionOutstandingToCollect,
+    },
+  };
+}
+
+// A file's per-direction, per-currency payment totals, shaped as
+// { [direction]: { USD, CDF } }, built from a grouped aggregation. The helpers
+// below turn that into the same currency-total objects toCurrencyTotals and
+// computeFileCashBalance produce per file, so assembleFileProfitability sees
+// identical inputs whether it was reached one file at a time or in a batch.
+function pickDirectionTotals(byDirection, direction) {
+  const d = byDirection[direction];
+  return { USD: d?.USD ?? 0, CDF: d?.CDF ?? 0 };
+}
+
+function sumDirectionTotals(byDirection, directions) {
+  const totals = { USD: 0, CDF: 0 };
+  for (const direction of directions) {
+    const d = byDirection[direction];
+    if (!d) continue;
+    totals.USD += d.USD;
+    totals.CDF += d.CDF;
+  }
+  return totals;
+}
+
+function cashBalanceFromDirectionTotals(byDirection) {
+  const balance = { USD: 0, CDF: 0 };
+  for (const [direction, totals] of Object.entries(byDirection)) {
+    const sign = INFLOW_DIRECTIONS.includes(direction)
+      ? 1
+      : OUTFLOW_DIRECTIONS.includes(direction)
+        ? -1
+        : 0;
+    balance.USD += sign * totals.USD;
+    balance.CDF += sign * totals.CDF;
+  }
+  return balance;
+}
+
+function aggregatesFromDirectionTotals(byDirection) {
+  return {
+    expenses: sumDirectionTotals(byDirection, EXPENSE_DIRECTIONS),
+    collected: pickDirectionTotals(byDirection, 'client_payment'),
+    transportPaid: pickDirectionTotals(byDirection, 'transporter_payment'),
+    cautionDeposited: pickDirectionTotals(byDirection, 'caution_deposit'),
+    cautionRefunded: pickDirectionTotals(byDirection, 'caution_refund'),
+    cashBalance: cashBalanceFromDirectionTotals(byDirection),
+  };
+}
+
+/**
  * Overall cash balance: sums every recorded Payment by direction/currency,
  * then subtracts profit transfers to the owner's personal account —
  * client_payment and caution_refund are inflows; every other Payment
@@ -135,42 +226,16 @@ export async function computeFileProfitability(fileId) {
   ]);
   const cautionRefunded = toCurrencyTotals(cautionRefundRows);
 
-  const currency = file.sellingPrice.currency;
-  const outstandingTransportCost = file.transportCost.amount - (transportPaid[file.transportCost.currency] ?? 0);
-  const outstandingTransportCostSameCurrency = file.transportCost.currency === currency ? outstandingTransportCost : 0;
-  const actualCautionPaid =
-    file.caution.type === 'actual' && file.caution.currency === currency ? cautionDeposited[currency] ?? 0 : 0;
-
-  const actualExpenses = (expenses[currency] ?? 0) + actualCautionPaid;
-  const profit = file.sellingPrice.amount - actualExpenses - outstandingTransportCostSameCurrency + actualCautionPaid;
-  const balanceDue = file.sellingPrice.amount - (collected[currency] ?? 0);
   const cashBalance = await computeFileCashBalance(fileId);
 
-  const cautionOutstandingToCollect =
-    file.caution.type === 'actual'
-      ? (cautionDeposited[file.caution.currency] ?? 0) - (cautionRefunded[file.caution.currency] ?? 0)
-      : 0;
-
-  return {
-    currency,
-    sellingPrice: file.sellingPrice.amount,
+  return assembleFileProfitability(file, {
     expenses,
-    profit,
-    realized: file.status === 'closed',
     collected,
-    balanceDue,
-    transportCost: file.transportCost,
-    outstandingTransportCost,
+    transportPaid,
+    cautionDeposited,
+    cautionRefunded,
     cashBalance,
-    caution: {
-      type: file.caution.type,
-      amount: file.caution.amount,
-      currency: file.caution.currency,
-      deposited: cautionDeposited[file.caution.currency] ?? 0,
-      refunded: cautionRefunded[file.caution.currency] ?? 0,
-      outstandingToCollect: cautionOutstandingToCollect,
-    },
-  };
+  });
 }
 
 /**
@@ -254,6 +319,47 @@ export async function computeClientProfitability(clientId) {
 }
 
 /**
+ * Loads full profitability for many files in a single grouped aggregation,
+ * returning a Map keyed by file id string. This is the batched equivalent of
+ * calling computeFileProfitability once per file: both feed the same
+ * assembleFileProfitability, so the figures are identical, but a report over N
+ * files costs one aggregation instead of ~7N. Files are used as already
+ * loaded (their sellingPrice/transportCost/caution/status fields), so pass in
+ * full ShipmentFile documents.
+ */
+async function loadFileProfitabilitiesByFile(files) {
+  const fileIds = files.map((f) => f._id);
+  const totalsRows = await Payment.aggregate([
+    { $match: { file: { $in: fileIds } } },
+    {
+      $group: {
+        _id: { file: '$file', direction: '$direction', currency: '$currency' },
+        total: { $sum: '$amount' },
+      },
+    },
+  ]);
+
+  const byFile = new Map();
+  for (const r of totalsRows) {
+    const key = r._id.file.toString();
+    let byDirection = byFile.get(key);
+    if (!byDirection) {
+      byDirection = {};
+      byFile.set(key, byDirection);
+    }
+    if (!byDirection[r._id.direction]) byDirection[r._id.direction] = { USD: 0, CDF: 0 };
+    byDirection[r._id.direction][r._id.currency] = r.total;
+  }
+
+  const result = new Map();
+  for (const file of files) {
+    const byDirection = byFile.get(file._id.toString()) ?? {};
+    result.set(file._id.toString(), assembleFileProfitability(file, aggregatesFromDirectionTotals(byDirection)));
+  }
+  return result;
+}
+
+/**
  * Per-file profit for every closed file, plus a per-currency cumulative
  * total. Each row also carries three automatically-derived pending flags
  * (balance still owed by the client, transport cost still owed to the
@@ -278,11 +384,13 @@ export async function computeClosedFilesProfitability() {
     lastPaymentRows.map((r) => [r._id.toString(), r.lastPaymentDate]),
   );
 
+  const profitabilityByFile = await loadFileProfitabilitiesByFile(files);
+
   const rows = [];
   const cumulative = { USD: 0, CDF: 0 };
 
   for (const file of files) {
-    const profitability = await computeFileProfitability(file._id);
+    const profitability = profitabilityByFile.get(file._id.toString());
     if (!profitability) continue;
 
     const lastPaymentDate = lastPaymentByFile.get(file._id.toString()) ?? null;
