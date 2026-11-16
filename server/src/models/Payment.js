@@ -37,5 +37,15 @@ const paymentSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Nearly every financial aggregation (file profitability, cash balance,
+// client/file statements) matches payments by file — most also by direction,
+// and the per-file payment history is sorted by date. This compound index
+// turns those from full-collection scans into index lookups. The `file` and
+// `file + direction` prefixes are served by the same index.
+paymentSchema.index({ file: 1, direction: 1, date: 1 });
+
+// The transporter statement groups a transporter's payments by file/currency.
+paymentSchema.index({ transporter: 1, direction: 1 });
+
 export const PAYMENT_DIRECTIONS = DIRECTIONS;
 export const Payment = mongoose.model('Payment', paymentSchema);

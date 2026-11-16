@@ -3,7 +3,6 @@ import { ShipmentFile } from '../models/ShipmentFile.js';
 import { Payment } from '../models/Payment.js';
 import { Client } from '../models/Client.js';
 import { Transporter } from '../models/Transporter.js';
-import { computeFileProfitability } from './financeService.js';
 
 function addToTotals(totals, currency, amount) {
   totals[currency] = (totals[currency] ?? 0) + amount;
@@ -19,12 +18,48 @@ export async function buildClientStatementData(clientId, { detailed = false } = 
   if (!client) return null;
 
   const files = await ShipmentFile.find({ client: clientId });
+  const fileIds = files.map((f) => f._id);
 
   const firstEntryRows = await Payment.aggregate([
-    { $match: { file: { $in: files.map((f) => f._id) }, direction: 'client_payment' } },
+    { $match: { file: { $in: fileIds }, direction: 'client_payment' } },
     { $group: { _id: '$file', firstEntryDate: { $min: '$date' } } },
   ]);
   const firstEntryByFile = new Map(firstEntryRows.map((r) => [r._id.toString(), r.firstEntryDate]));
+
+  // Total client payments per file, split by currency. A client statement only
+  // ever needs the selling price and what's been collected against it, so a
+  // single grouped aggregation over all the client's receipts replaces the old
+  // per-file computeFileProfitability loop (which also computed expenses,
+  // caution and cash-balance figures this statement never uses).
+  const collectedRows = await Payment.aggregate([
+    { $match: { file: { $in: fileIds }, direction: 'client_payment' } },
+    { $group: { _id: { file: '$file', currency: '$currency' }, total: { $sum: '$amount' } } },
+  ]);
+  const collectedByFile = new Map();
+  for (const r of collectedRows) {
+    collectedByFile.set(`${r._id.file}-${r._id.currency}`, r.total);
+  }
+
+  // Full client-payment history per file for detailed statements, fetched in a
+  // single date-sorted query and grouped in memory. Filtering a globally
+  // date-ascending list preserves each file's payments in ascending date order,
+  // matching the old per-file sort({ date: 1 }).
+  const paymentsByFile = new Map();
+  if (detailed) {
+    const allPayments = await Payment.find({ file: { $in: fileIds }, direction: 'client_payment' })
+      .populate('paymentType', 'name')
+      .sort({ date: 1 });
+    for (const p of allPayments) {
+      const key = p.file.toString();
+      if (!paymentsByFile.has(key)) paymentsByFile.set(key, []);
+      paymentsByFile.get(key).push({
+        date: p.date,
+        amount: p.amount,
+        currency: p.currency,
+        paymentType: p.paymentType?.name ?? 'Payment',
+      });
+    }
+  }
 
   // Most recent first-entry date first, oldest last; files with no client payments yet sort to the top.
   files.sort((a, b) => {
@@ -40,32 +75,28 @@ export async function buildClientStatementData(clientId, { detailed = false } = 
   const totals = { sellingPrice: {}, collected: {}, balanceDue: {} };
 
   for (const file of files) {
-    const profitability = await computeFileProfitability(file._id);
+    const currency = file.sellingPrice.currency;
+    const sellingPrice = file.sellingPrice.amount;
+    const collected = collectedByFile.get(`${file._id}-${currency}`) ?? 0;
+    const balanceDue = sellingPrice - collected;
+
     const row = {
       blNumber: file.blNumber,
       status: file.status,
-      currency: profitability.currency,
-      sellingPrice: profitability.sellingPrice,
-      collected: profitability.collected[profitability.currency] ?? 0,
-      balanceDue: profitability.balanceDue,
+      currency,
+      sellingPrice,
+      collected,
+      balanceDue,
     };
 
     if (detailed) {
-      const payments = await Payment.find({ file: file._id, direction: 'client_payment' })
-        .populate('paymentType', 'name')
-        .sort({ date: 1 });
-      row.payments = payments.map((p) => ({
-        date: p.date,
-        amount: p.amount,
-        currency: p.currency,
-        paymentType: p.paymentType?.name ?? 'Payment',
-      }));
+      row.payments = paymentsByFile.get(file._id.toString()) ?? [];
     }
 
     rows.push(row);
-    addToTotals(totals.sellingPrice, profitability.currency, profitability.sellingPrice);
-    addToTotals(totals.collected, profitability.currency, profitability.collected[profitability.currency] ?? 0);
-    addToTotals(totals.balanceDue, profitability.currency, profitability.balanceDue);
+    addToTotals(totals.sellingPrice, currency, sellingPrice);
+    addToTotals(totals.collected, currency, collected);
+    addToTotals(totals.balanceDue, currency, balanceDue);
   }
 
   return { client, rows, totals };
